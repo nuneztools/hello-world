@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dónde vive cada cosa — Contexto de Copilot</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700;800&family=Hanken+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --red:#ED1C24;--red-deep:#C20E14;--red-tint:rgba(237,28,36,.07);
+    --ink:#23262B;--txt:#3C4149;--txt-dim:#6B7079;--txt-faint:#9AA0A8;
+    --page:#F2F1ED;--card:#FFFFFF;--panel:#FAF9F6;--line:#E4E2DC;
+    --green:#1E9E72;--amber:#BC850F;--purple:#7A5BC2;--rose:#C9526E;--teal:#2F8E9C;
+    --mono:'JetBrains Mono',ui-monospace,monospace;--sans:'Hanken Grotesk',system-ui,sans-serif;
+    --shadow:0 1px 2px rgba(35,38,43,.04),0 4px 18px rgba(35,38,43,.04);
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{-webkit-text-size-adjust:100%}
+  body{background:var(--page);color:var(--txt);font-family:var(--sans);line-height:1.5;padding:48px 24px 80px;
+    background-image:linear-gradient(rgba(35,38,43,.022) 1px,transparent 1px),linear-gradient(90deg,rgba(35,38,43,.022) 1px,transparent 1px),radial-gradient(circle at 12% 0%, rgba(237,28,36,.06), transparent 42%);
+    background-size:40px 40px,40px 40px,100% 100%}
+  .wrap{max-width:1080px;margin:0 auto}
+
+  header{border:1px solid var(--line);border-radius:14px;background:var(--card);padding:30px 34px;position:relative;overflow:hidden;box-shadow:var(--shadow);opacity:0;animation:rise .6s ease forwards}
+  header::before{content:"";position:absolute;left:0;top:0;bottom:0;width:5px;background:var(--red)}
+  .kicker{font-family:var(--mono);font-size:11px;letter-spacing:.22em;text-transform:uppercase;color:var(--red);font-weight:700;display:flex;gap:10px;align-items:center}
+  .kicker::after{content:"";height:1px;flex:1;background:var(--line)}
+  h1{font-family:var(--mono);font-weight:800;letter-spacing:-.02em;font-size:clamp(24px,4vw,38px);margin:14px 0 6px;line-height:1.06;color:var(--ink)}
+  h1 .slash{color:var(--red)}
+  .sub{color:var(--txt-dim);font-size:15px;max-width:64ch}
+
+  .sect{font-family:var(--mono);font-size:12px;letter-spacing:.18em;text-transform:uppercase;color:var(--txt-faint);font-weight:700;margin:42px 0 18px;display:flex;align-items:center;gap:12px}
+  .sect .n{color:var(--red)}
+  .sect::after{content:"";height:1px;flex:1;background:var(--line)}
+  code{font-family:var(--mono)}
+
+  .diagram{border:1px solid var(--line);border-radius:14px;background:var(--card);padding:28px 26px;box-shadow:var(--shadow);opacity:0;animation:rise .6s ease forwards}
+  .repo-box{border:1.5px solid rgba(30,158,114,.5);border-radius:12px;background:linear-gradient(180deg,rgba(30,158,114,.05),transparent);padding:20px 22px;position:relative}
+  .repo-label{position:absolute;top:-11px;left:18px;background:var(--card);padding:0 10px;font-family:var(--mono);font-size:11px;font-weight:700;color:var(--green);letter-spacing:.10em}
+  .files{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:6px}
+  .file{border:1px solid var(--line);border-radius:9px;background:var(--panel);padding:14px 15px;border-top:3px solid var(--fc,var(--line))}
+  .file .fn{font-family:var(--mono);font-size:12.5px;font-weight:700;color:var(--ink);word-break:break-all;line-height:1.35}
+  .file .ft{font-size:12px;color:var(--txt-dim);margin-top:6px;line-height:1.4}
+  .file .role-tag{display:inline-block;margin-top:9px;font-family:var(--mono);font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--fc);border:1px solid var(--fc);border-radius:5px;padding:2px 7px}
+  .f-agents{--fc:var(--purple)}.f-instr{--fc:var(--amber)}.f-const{--fc:var(--red)}
+
+  .arrow-down{display:flex;flex-direction:column;align-items:center;padding:14px 0 6px}
+  .arrow-line{width:2px;height:22px;background:linear-gradient(var(--green),var(--txt-faint))}
+  .arrow-cap{font-family:var(--mono);font-size:11px;color:var(--green);font-weight:600;border:1px solid rgba(30,158,114,.35);background:rgba(30,158,114,.06);border-radius:999px;padding:5px 13px;margin:8px 0}
+  .arrow-head{color:var(--txt-faint);font-size:14px;line-height:1}
+  .devs{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-top:4px}
+  .dev{border:1px solid var(--line);border-radius:9px;background:var(--panel);padding:13px 10px;text-align:center}
+  .dev .ic{font-size:18px}
+  .dev .dn{font-family:var(--mono);font-size:12px;font-weight:700;color:var(--ink);margin-top:4px}
+  .dev .ds{font-size:11px;color:var(--txt-faint);margin-top:2px}
+  .read-note{margin-top:16px;text-align:center;font-size:13px;color:var(--txt-dim);background:var(--panel);border:1px dashed var(--line);border-radius:9px;padding:11px 14px}
+  .read-note b{color:var(--green)}
+
+  .grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+  .pcard{border:1px solid var(--line);border-radius:12px;background:var(--card);padding:20px 20px 18px;border-top:3px solid var(--ac);box-shadow:var(--shadow);opacity:0;animation:rise .55s ease forwards}
+  .pcard .pn{font-family:var(--mono);font-size:13px;font-weight:800;color:var(--ink);word-break:break-all}
+  .pcard .pq{font-family:var(--mono);font-size:10.5px;letter-spacing:.10em;text-transform:uppercase;color:var(--ac);font-weight:700;margin-top:7px}
+  .pcard .pd{font-size:13px;color:var(--txt-dim);margin-top:11px;line-height:1.5}
+  .pcard ul{list-style:none;margin-top:11px;display:flex;flex-direction:column;gap:6px}
+  .pcard li{font-size:12.5px;color:var(--txt-dim);padding-left:16px;position:relative;line-height:1.4}
+  .pcard li::before{content:"▸";position:absolute;left:0;color:var(--ac);font-size:10px;top:2px}
+  .p-agents{--ac:var(--purple)}.p-instr{--ac:var(--amber)}.p-const{--ac:var(--red)}
+
+  .merge{margin-top:16px;border:1px solid var(--line);border-left:3px solid var(--teal);background:rgba(47,142,156,.05);border-radius:10px;padding:14px 18px;font-size:13.5px;color:var(--txt);box-shadow:var(--shadow);opacity:0;animation:rise .5s ease forwards;animation-delay:.3s}
+  .merge b{color:var(--teal)}
+
+  .vs{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+  .vscard{border:1px solid var(--line);border-radius:12px;padding:22px 22px;box-shadow:var(--shadow);opacity:0;animation:rise .55s ease forwards}
+  .vs-repo{background:linear-gradient(135deg,var(--card),rgba(30,158,114,.04));border-color:rgba(30,158,114,.3)}
+  .vs-space{background:linear-gradient(135deg,var(--card),rgba(154,160,168,.06));border-color:var(--line)}
+  .vscard h3{font-family:var(--mono);font-size:15px;font-weight:800;margin-bottom:4px;display:flex;align-items:center;gap:9px}
+  .vs-repo h3{color:var(--green)}.vs-space h3{color:var(--txt-faint)}
+  .vscard .tagline{font-size:13px;color:var(--txt-dim);margin-bottom:14px}
+  .vsrow{display:grid;grid-template-columns:90px 1fr;gap:10px;padding:9px 0;border-top:1px dashed var(--line);font-size:13px}
+  .vsrow .k{font-family:var(--mono);font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--txt-faint);font-weight:700;padding-top:2px}
+  .vsrow .v{color:var(--txt)}.vsrow .v b{color:var(--ink)}
+  .badge-team{color:var(--green);font-weight:700}
+  .badge-blocked{color:var(--red);font-weight:700}
+
+  .table{border:1px solid var(--line);border-radius:12px;overflow:hidden;box-shadow:var(--shadow);opacity:0;animation:rise .6s ease forwards}
+  .trow{display:grid;grid-template-columns:1fr 210px;gap:14px;align-items:center;padding:13px 18px;border-bottom:1px solid var(--line);background:var(--card)}
+  .trow:last-child{border-bottom:0}
+  .trow.head{background:var(--panel);font-family:var(--mono);font-size:11px;letter-spacing:.10em;text-transform:uppercase;color:var(--txt-faint);font-weight:700}
+  .trow .ex{font-size:13.5px;color:var(--txt)}
+  .trow .ex code{font-size:12px;color:var(--red-deep);background:var(--red-tint);padding:1px 5px;border-radius:4px}
+  .dest{font-family:var(--mono);font-weight:700;font-size:12px;white-space:nowrap;padding:6px 11px;border-radius:7px;border:1px solid var(--bd);color:var(--cl);background:var(--bg);text-align:center}
+  .d-agents{--cl:var(--purple);--bd:rgba(122,91,194,.4);--bg:rgba(122,91,194,.07)}
+  .d-instr{--cl:var(--amber);--bd:rgba(188,133,15,.45);--bg:rgba(188,133,15,.08)}
+  .d-const{--cl:var(--red);--bd:rgba(237,28,36,.45);--bg:var(--red-tint)}
+  .d-docs{--cl:var(--teal);--bd:rgba(47,142,156,.4);--bg:rgba(47,142,156,.07)}
+
+  .goldrule{margin-top:18px;border:1px solid var(--line);border-radius:12px;background:var(--card);padding:20px 22px;box-shadow:var(--shadow);opacity:0;animation:rise .5s ease forwards}
+  .goldrule h4{font-family:var(--mono);font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--ink);font-weight:700;margin-bottom:14px}
+  .gr-q{display:grid;grid-template-columns:1fr auto;gap:14px;align-items:center;padding:10px 0;border-top:1px dashed var(--line)}
+  .gr-q:first-of-type{border-top:0}
+  .gr-q .qq{font-size:13.5px;color:var(--txt)}
+  .gr-q .qq i{color:var(--txt-faint);font-style:italic}
+
+  footer{margin-top:48px;padding-top:20px;border-top:1px solid var(--line);font-family:var(--mono);font-size:11.5px;color:var(--txt-faint);display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px}
+  footer b{color:var(--txt-dim)}.footer .right,footer .right{text-align:right}
+
+  @keyframes rise{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:translateY(0)}}
+  header{animation-delay:.02s}.diagram{animation-delay:.08s}
+  .pcard:nth-child(1){animation-delay:.10s}.pcard:nth-child(2){animation-delay:.16s}.pcard:nth-child(3){animation-delay:.22s}
+  .vscard:nth-child(1){animation-delay:.10s}.vscard:nth-child(2){animation-delay:.16s}.table{animation-delay:.10s}
+
+  @media(max-width:780px){.files,.grid3,.vs,.devs{grid-template-columns:1fr}.trow{grid-template-columns:1fr;gap:9px}.dest{justify-self:start}body{padding:28px 14px 60px}header{padding:24px 22px}.vsrow{grid-template-columns:1fr;gap:2px}}
+  @media print{body{background:#fff;padding:0}*{animation:none!important;opacity:1!important;box-shadow:none!important}.diagram,.pcard,.vscard,.table,.trow,.goldrule,header,.merge{border-color:#ccc}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <div class="kicker">CCA · Workshop — Punto 2</div>
+    <h1>Dónde vive cada cosa <span class="slash">/</span> Contexto de Copilot</h1>
+    <p class="sub">Los 3 archivos de contexto, qué va en cada uno, y por qué viven en el repo (compartidos con todo el equipo) en vez de en un Space personal.</p>
+  </header>
+
+  <div class="sect"><span class="n">01</span> Los 3 archivos viven en el repo = compartidos con TODO el equipo</div>
+  <div class="diagram">
+    <div class="repo-box">
+      <span class="repo-label">REPO GIT · ca-baas-tokenization-gateway</span>
+      <div class="files">
+        <div class="file f-agents"><div class="fn">AGENTS.md</div><div class="ft">El mapa del código</div><div class="role-tag">descriptivo</div></div>
+        <div class="file f-instr"><div class="fn">.github/copilot-instructions.md</div><div class="ft">Las reglas al escribir</div><div class="role-tag">mecánico</div></div>
+        <div class="file f-const"><div class="fn">.specify/memory/constitution.md</div><div class="ft">Los principios de la spec</div><div class="role-tag">principios</div></div>
+      </div>
+    </div>
+    <div class="arrow-down">
+      <div class="arrow-line"></div>
+      <div class="arrow-cap">git push / pull  =  el mecanismo de compartir</div>
+      <div class="arrow-head">▼</div>
+    </div>
+    <div class="devs">
+      <div class="dev"><div class="ic">👤</div><div class="dn">Vos</div><div class="ds">CCACCS-254</div></div>
+      <div class="dev"><div class="ic">👤</div><div class="dn">Dev 2</div><div class="ds">otro repo</div></div>
+      <div class="dev"><div class="ic">👤</div><div class="dn">Dev 3</div><div class="ds">otro repo</div></div>
+      <div class="dev"><div class="ic">👤</div><div class="dn">Dev 4</div><div class="ds">otro repo</div></div>
+    </div>
+    <div class="read-note">Copilot los lee <b>automáticamente</b> en el IDE, en cada interacción dentro del repo. Sin setup por dev. Versionados y revisables por PR.</div>
+  </div>
+
+  <div class="sect"><span class="n">02</span> Qué va en cada uno</div>
+  <div class="grid3">
+    <div class="pcard p-agents">
+      <div class="pn">AGENTS.md</div>
+      <div class="pq">El mapa · cómo ES</div>
+      <div class="pd">Hechos descriptivos del código. Onboarding del agente.</div>
+      <ul><li>Cómo fluye un request (controller → delegate → operation)</li><li>Comandos de build (gradlew check)</li><li>Dónde vive cada cosa (BaasClient, GatewayCCAFactory)</li><li>Convenciones existentes del repo</li></ul>
+    </div>
+    <div class="pcard p-instr">
+      <div class="pn">copilot-instructions.md</div>
+      <div class="pq">Las reglas · cómo ESCRIBIR</div>
+      <div class="pd">Guardrails mecánicos que el agente aplica siempre al codear.</div>
+      <ul><li>No <code style="color:var(--amber);background:rgba(188,133,15,.08)">@Async via this</code></li><li>Constructor injection con Lombok</li><li>No printStackTrace · genéricos parametrizados</li><li>No editar <code style="color:var(--amber);background:rgba(188,133,15,.08)">src/main/generated*</code></li></ul>
+    </div>
+    <div class="pcard p-const">
+      <div class="pn">constitution.md</div>
+      <div class="pq">Los principios · qué SIEMPRE</div>
+      <div class="pd">Principios que toda spec / plan / task debe respetar.</div>
+      <ul><li>PCI: nunca loguear PAN / CVV / tokens</li><li>Idempotencia en flujos dual-routing</li><li>Resiliencia: timeout, retry, Store &amp; Forward</li><li>Gates de testing antes de implementar</li></ul>
+    </div>
+  </div>
+  <div class="merge"><b>Cómo se combinan:</b> Copilot los carga los tres a la vez — es un <b>merge aditivo</b>, no un filtro. En conflicto gana el de mayor prioridad (constitution &gt; instructions &gt; AGENTS). No dupliques la misma regla en dos archivos.</div>
+
+  <div class="sect"><span class="n">03</span> Tu "segundo cerebro" = el repo, NO un Space</div>
+  <div class="vs">
+    <div class="vscard vs-repo">
+      <h3>📁 Repo (incluye <code style="font-size:13px;background:rgba(30,158,114,.08);color:var(--green);padding:1px 5px;border-radius:4px">/docs/</code>)</h3>
+      <div class="tagline">Reglas, principios, mapa + contexto de negocio. La memoria del equipo.</div>
+      <div class="vsrow"><div class="k">Dónde</div><div class="v">Dentro del repo Git</div></div>
+      <div class="vsrow"><div class="k">Quién ve</div><div class="v"><span class="badge-team">TODO el equipo</span> · vía git</div></div>
+      <div class="vsrow"><div class="k">En el IDE</div><div class="v"><b>Sí</b> · Copilot lee el workspace, sin MCP</div></div>
+      <div class="vsrow"><div class="k">Versionado</div><div class="v">Sí · PR · historial</div></div>
+      <div class="vsrow"><div class="k">Contenido</div><div class="v">Reglas, principios, mapa, glosario, diseño</div></div>
+    </div>
+    <div class="vscard vs-space">
+      <h3>🗂 Copilot Space</h3>
+      <div class="tagline">Bloqueado para ustedes hoy. Futuro, si habilitan MCP.</div>
+      <div class="vsrow"><div class="k">Dónde</div><div class="v">En la nube de Copilot</div></div>
+      <div class="vsrow"><div class="k">Quién ve</div><div class="v"><span class="badge-blocked">SOLO vos</span> · sharing off en la org</div></div>
+      <div class="vsrow"><div class="k">En el IDE</div><div class="v"><span class="badge-blocked">No</span> · requiere GitHub MCP server (off)</div></div>
+      <div class="vsrow"><div class="k">Versionado</div><div class="v">No</div></div>
+      <div class="vsrow"><div class="k">Contenido</div><div class="v">No soporta repo ni archivos subidos en IDE</div></div>
+    </div>
+  </div>
+  <div class="merge" style="border-left-color:var(--red);background:var(--red-tint);animation-delay:.24s">
+    <b style="color:var(--red-deep)">Clave:</b> en tu org, Spaces ni se comparte (<i>Individual Sharing = off</i>) ni se alcanza desde IntelliJ (necesita MCP, también off). Por eso el "segundo cerebro" del equipo es <b>markdown en el repo</b> (estilo Obsidian, pero versionado y compartible). El contexto de negocio transversal va al repo <b>cca-copilot-playbook</b>; el específico, a <code style="background:rgba(47,142,156,.08);color:var(--teal);padding:1px 5px;border-radius:4px">/docs/context/</code> del repo del proyecto.
+  </div>
+
+  <div class="sect"><span class="n">04</span> ¿Esta regla / contenido, dónde va?</div>
+  <div class="table">
+    <div class="trow head"><div class="ex">Ejemplo concreto</div><div class="dest" style="border:0;background:0;color:var(--txt-faint)">Destino</div></div>
+    <div class="trow"><div class="ex">"Constructor injection con Lombok, nunca field injection"</div><div class="dest d-instr">copilot-instructions</div></div>
+    <div class="trow"><div class="ex">"No <code>@Async via this</code>"</div><div class="dest d-instr">copilot-instructions</div></div>
+    <div class="trow"><div class="ex">"Un request pasa de controller → delegate → operation"</div><div class="dest d-agents">AGENTS.md</div></div>
+    <div class="trow"><div class="ex">"Para buildear: <code>.\gradlew.bat clean build check</code>"</div><div class="dest d-agents">AGENTS.md</div></div>
+    <div class="trow"><div class="ex">"Nunca loguear PAN, CVV ni tokens"</div><div class="dest d-const">constitution.md</div></div>
+    <div class="trow"><div class="ex">"Todo flujo dual-routing define dueño de idempotencia"</div><div class="dest d-const">constitution.md</div></div>
+    <div class="trow"><div class="ex">"Gates de testing: criterios testeable antes de implementar"</div><div class="dest d-const">constitution.md</div></div>
+    <div class="trow"><div class="ex">"El diseño de arquitectura de 4 capas (estaba en Confluence)"</div><div class="dest d-docs">repo /docs/</div></div>
+    <div class="trow"><div class="ex">"Glosario y docs de la API de Monibyte / Tsys"</div><div class="dest d-docs">repo /docs/</div></div>
+    <div class="trow"><div class="ex">"Reusar los mappers MapStruct de <code>adapters/</code>"</div><div class="dest d-instr">copilot-instructions</div></div>
+  </div>
+
+  <div class="goldrule">
+    <h4>★ Test de 4 preguntas para decidir</h4>
+    <div class="gr-q"><div class="qq">¿Es un hecho descriptivo del código? <i>(cómo es)</i></div><div class="dest d-agents">AGENTS.md</div></div>
+    <div class="gr-q"><div class="qq">¿Es una regla al escribir código? <i>(cómo escribir)</i></div><div class="dest d-instr">copilot-instructions</div></div>
+    <div class="gr-q"><div class="qq">¿Es un principio que toda spec debe respetar? <i>(qué siempre)</i></div><div class="dest d-const">constitution.md</div></div>
+    <div class="gr-q"><div class="qq">¿Es contexto de negocio que no vive en el código? <i>(diseño, glosario, docs API)</i></div><div class="dest d-docs">repo /docs/</div></div>
+  </div>
+
+  <footer>
+    <div>Repo · <b>cca-copilot-playbook</b> + el repo de cada proyecto<br>Todo vive en git = team-wide · Spaces queda para cuando se habilite MCP</div>
+    <div class="right">Punto 2 de 6 del taller<br><b>Última revisión: 28-may-2026</b></div>
+  </footer>
+
+</div>
+</body>
+</html>

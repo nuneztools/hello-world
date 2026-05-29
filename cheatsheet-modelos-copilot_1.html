@@ -1,0 +1,428 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Estrategia de Modelos & Uso — GitHub Copilot</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700;800&family=Hanken+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --red:#ED1C24;          /* Davibank red — primary */
+    --red-deep:#C20E14;
+    --red-tint:rgba(237,28,36,.07);
+    --ink:#23262B;          /* headings */
+    --txt:#3C4149;          /* body */
+    --txt-dim:#6B7079;
+    --txt-faint:#9AA0A8;
+    --page:#F2F1ED;         /* warm off-white page */
+    --card:#FFFFFF;
+    --panel:#FAF9F6;
+    --line:#E4E2DC;
+    --line-soft:#EEEDE8;
+    --green:#1E9E72;        /* 1x / default — brand mint deepened */
+    --amber:#BC850F;        /* 3x / cost — brand tan deepened */
+    --purple:#7A5BC2;       /* contraste — brand lavender deepened */
+    --rose:#C9526E;         /* alt — brand blush deepened */
+    --teal:#2F8E9C;
+    --mono:'JetBrains Mono',ui-monospace,monospace;
+    --sans:'Hanken Grotesk',system-ui,sans-serif;
+    --shadow:0 1px 2px rgba(35,38,43,.04),0 4px 18px rgba(35,38,43,.04);
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{-webkit-text-size-adjust:100%}
+  body{
+    background:var(--page);color:var(--txt);font-family:var(--sans);line-height:1.5;
+    padding:48px 24px 80px;
+    background-image:
+      linear-gradient(rgba(35,38,43,.022) 1px,transparent 1px),
+      linear-gradient(90deg,rgba(35,38,43,.022) 1px,transparent 1px),
+      radial-gradient(circle at 12% 0%, rgba(237,28,36,.06), transparent 42%);
+    background-size:40px 40px,40px 40px,100% 100%;
+  }
+  .wrap{max-width:1080px;margin:0 auto}
+
+  header{
+    border:1px solid var(--line);border-radius:14px;background:var(--card);
+    padding:30px 34px;position:relative;overflow:hidden;box-shadow:var(--shadow);
+    opacity:0;animation:rise .6s ease forwards;
+  }
+  header::before{content:"";position:absolute;left:0;top:0;bottom:0;width:5px;background:var(--red)}
+  .kicker{font-family:var(--mono);font-size:11px;letter-spacing:.22em;text-transform:uppercase;color:var(--red);font-weight:700;display:flex;gap:10px;align-items:center}
+  .kicker::after{content:"";height:1px;flex:1;background:var(--line)}
+  h1{font-family:var(--mono);font-weight:800;letter-spacing:-.02em;font-size:clamp(26px,4.4vw,40px);margin:14px 0 6px;line-height:1.05;color:var(--ink)}
+  h1 .slash{color:var(--red)}
+  .sub{color:var(--txt-dim);font-size:15px;max-width:62ch}
+  .meta{margin-top:16px;display:flex;flex-wrap:wrap;gap:8px;font-family:var(--mono);font-size:11px}
+  .tag{border:1px solid var(--line);border-radius:6px;padding:5px 10px;color:var(--txt-dim);background:var(--panel)}
+  .tag b{color:var(--ink)}
+
+  .notice{
+    margin-top:18px;border:1px solid rgba(188,133,15,.4);background:rgba(188,133,15,.07);
+    border-left:3px solid var(--amber);border-radius:10px;padding:14px 18px;
+    display:flex;gap:14px;align-items:flex-start;
+  }
+  .notice .ico{font-family:var(--mono);color:var(--amber);font-weight:700;font-size:13px;letter-spacing:.08em;flex-shrink:0}
+  .notice .body{font-size:13.5px;color:var(--txt)}
+  .notice .body b{color:var(--ink)}
+  .notice .body span{color:var(--txt-dim)}
+
+  .sect{font-family:var(--mono);font-size:12px;letter-spacing:.18em;text-transform:uppercase;color:var(--txt-faint);font-weight:700;margin:42px 0 16px;display:flex;align-items:center;gap:12px}
+  .sect .n{color:var(--red)}
+  .sect::after{content:"";height:1px;flex:1;background:var(--line)}
+
+  .grid{display:grid;grid-template-columns:repeat(2,1fr);gap:16px}
+  .card{border:1px solid var(--line);border-radius:12px;background:var(--card);padding:22px 22px 20px;position:relative;overflow:hidden;box-shadow:var(--shadow);opacity:0;animation:rise .6s ease forwards}
+  .card::before{content:"";position:absolute;top:0;left:0;right:0;height:3px;background:var(--accent,var(--line))}
+  .card .role{font-family:var(--mono);font-size:10.5px;letter-spacing:.16em;text-transform:uppercase;font-weight:700;color:var(--accent)}
+  .card .name{font-family:var(--mono);font-weight:800;font-size:21px;margin:6px 0 2px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;color:var(--ink)}
+  .mult{font-family:var(--mono);font-size:12px;font-weight:700;padding:3px 9px;border-radius:999px;border:1px solid}
+  .mult.x1{color:var(--green);border-color:rgba(30,158,114,.4);background:rgba(30,158,114,.08)}
+  .mult.x3{color:var(--amber);border-color:rgba(188,133,15,.45);background:rgba(188,133,15,.10)}
+  .mult.ext{color:var(--red);border-color:rgba(237,28,36,.45);background:var(--red-tint)}
+  .card .for{margin-top:14px;font-size:14px;color:var(--txt)}
+  .card .for b{color:var(--ink)}
+  .card ul{list-style:none;margin-top:10px;display:flex;flex-direction:column;gap:7px}
+  .card li{font-size:13.5px;color:var(--txt-dim);padding-left:18px;position:relative;line-height:1.45}
+  .card li::before{content:"▸";position:absolute;left:0;color:var(--accent);font-size:11px;top:2px}
+  .card .note{margin-top:14px;font-family:var(--mono);font-size:11.5px;color:var(--txt-faint);border-top:1px dashed var(--line);padding-top:11px}
+  .c-sonnet{--accent:var(--green)}.c-opus{--accent:var(--amber)}.c-gpt{--accent:var(--purple)}.c-codex{--accent:var(--rose)}.c-duck{--accent:var(--red)}
+  code{font-family:var(--mono)}
+
+  .duck-wrap{grid-column:1/-1}
+  .c-duck{background:linear-gradient(135deg,var(--card),var(--red-tint));border-color:rgba(237,28,36,.28)}
+  .duck-cols{display:grid;grid-template-columns:1fr 1fr;gap:24px;margin-top:14px}
+  .duck-col h5{font-family:var(--mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;margin-bottom:9px;font-weight:700}
+  .duck-col.ok h5{color:var(--green)}.duck-col.no h5{color:var(--red)}
+  .duck-col ul{margin-top:0}
+  .duck-col.ok li::before{content:"✓";color:var(--green)}
+  .duck-col.no li::before{content:"✗";color:var(--red)}
+
+  .flow{display:flex;flex-direction:column;gap:0;border:1px solid var(--line);border-radius:12px;overflow:hidden;box-shadow:var(--shadow)}
+  .row{display:grid;grid-template-columns:1fr auto;gap:16px;align-items:center;padding:15px 20px;border-bottom:1px solid var(--line);background:var(--card);opacity:0;animation:rise .5s ease forwards}
+  .row:last-child{border-bottom:0}
+  .row .q{font-size:14.5px;color:var(--txt)}
+  .row .q span{color:var(--txt-faint);font-family:var(--mono);font-size:12px}
+  .pick{font-family:var(--mono);font-weight:700;font-size:13px;white-space:nowrap;padding:7px 13px;border-radius:8px;border:1px solid var(--bd,var(--line));color:var(--cl,var(--txt));background:var(--bg,transparent)}
+  .p-sonnet{--cl:var(--green);--bd:rgba(30,158,114,.4);--bg:rgba(30,158,114,.07)}
+  .p-opus{--cl:var(--amber);--bd:rgba(188,133,15,.45);--bg:rgba(188,133,15,.08)}
+  .p-gpt{--cl:var(--purple);--bd:rgba(122,91,194,.4);--bg:rgba(122,91,194,.07)}
+  .p-duck{--cl:var(--red);--bd:rgba(237,28,36,.4);--bg:var(--red-tint)}
+  .p-never{--cl:var(--red-deep);--bd:rgba(237,28,36,.5);--bg:var(--red-tint)}
+
+  .rules{display:grid;grid-template-columns:repeat(2,1fr);gap:14px}
+  .rule{border:1px solid var(--line);border-left:3px solid var(--red);border-radius:10px;background:var(--card);padding:16px 18px;box-shadow:var(--shadow);opacity:0;animation:rise .5s ease forwards}
+  .rule h4{font-family:var(--mono);font-size:13px;font-weight:700;color:var(--ink);margin-bottom:6px}
+  .rule p{font-size:13px;color:var(--txt-dim);line-height:1.5}
+  .rule p code,.row code{font-size:12px;color:var(--red-deep);background:var(--red-tint);padding:1px 5px;border-radius:4px}
+
+  .block{border:1px solid var(--line);border-radius:12px;background:var(--card);padding:22px 24px;box-shadow:var(--shadow);opacity:0;animation:rise .5s ease forwards}
+  .block + .block{margin-top:14px}
+  .block h3{font-family:var(--mono);font-size:13px;letter-spacing:.10em;text-transform:uppercase;color:var(--ink);font-weight:700;margin-bottom:12px;display:flex;align-items:center;gap:10px}
+  .block h3 .dot{width:7px;height:7px;border-radius:50%;background:var(--red);display:inline-block}
+  .twocol{display:grid;grid-template-columns:1fr 1fr;gap:22px}
+  .twocol h4{font-family:var(--mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--txt-faint);font-weight:700;margin-bottom:8px}
+  .twocol ul{list-style:none;display:flex;flex-direction:column;gap:7px}
+  .twocol li{font-size:13.5px;color:var(--txt-dim);padding-left:18px;position:relative;line-height:1.5}
+  .twocol li::before{content:"▸";position:absolute;left:0;color:var(--red);font-size:11px;top:3px}
+  .twocol li b{color:var(--ink)}
+  .twocol li code{font-size:12px;color:var(--teal);background:rgba(47,142,156,.08);padding:1px 5px;border-radius:4px;word-break:break-all}
+
+  .plan{display:grid;grid-template-columns:auto 1fr;gap:14px;align-items:flex-start;padding:10px 0;border-bottom:1px dashed var(--line)}
+  .plan:last-child{border-bottom:0}
+  .plan .letter{font-family:var(--mono);font-weight:800;font-size:13px;background:var(--red-tint);color:var(--red-deep);border:1px solid rgba(237,28,36,.3);padding:3px 9px;border-radius:6px;flex-shrink:0;letter-spacing:.05em}
+  .plan p{font-size:13.5px;color:var(--txt);line-height:1.55}
+  .plan p b{color:var(--ink)}
+  .plan p span{color:var(--txt-faint);font-size:12.5px}
+
+  footer{margin-top:48px;padding-top:20px;border-top:1px solid var(--line);font-family:var(--mono);font-size:11.5px;color:var(--txt-faint);display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px}
+  footer b{color:var(--txt-dim)}
+  footer .right{text-align:right}
+
+  @keyframes rise{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:translateY(0)}}
+  header{animation-delay:.02s}
+  .card:nth-child(1){animation-delay:.10s}.card:nth-child(2){animation-delay:.16s}.card:nth-child(3){animation-delay:.22s}.card:nth-child(4){animation-delay:.28s}.card:nth-child(5){animation-delay:.34s}
+  .row:nth-child(1){animation-delay:.10s}.row:nth-child(2){animation-delay:.14s}.row:nth-child(3){animation-delay:.18s}.row:nth-child(4){animation-delay:.22s}.row:nth-child(5){animation-delay:.26s}.row:nth-child(6){animation-delay:.30s}
+  .rule:nth-child(1){animation-delay:.10s}.rule:nth-child(2){animation-delay:.16s}.rule:nth-child(3){animation-delay:.22s}.rule:nth-child(4){animation-delay:.28s}
+
+  @media(max-width:760px){.grid,.rules,.duck-cols,.twocol{grid-template-columns:1fr}body{padding:28px 14px 60px}header{padding:24px 22px}.row{grid-template-columns:1fr;gap:10px}.pick{justify-self:start}}
+  @media print{body{background:#fff;padding:0}*{animation:none!important;opacity:1!important;box-shadow:none!important}.card,.rule,.row,header,.block,.notice,.flow{border-color:#ccc}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <div class="kicker">CCA · Credit Card Support — Workshop</div>
+    <h1>Estrategia de Modelos <span class="slash">/</span> Uso<br>GitHub Copilot</h1>
+    <p class="sub">Qué modelo usar, cómo monitorear el consumo, cuándo escalar al rubber duck y cómo mantener este documento vivo. Para trabajar con Spec Kit en repos Java/Spring brownfield del banco.</p>
+    <div class="meta">
+      <span class="tag">IDE · <b>IntelliJ Ultimate + plugin Copilot</b></span>
+      <span class="tag">Plan · <b>Copilot Business</b></span>
+      <span class="tag">Modo · <b>Agent (código) / Ask (refinar)</b></span>
+    </div>
+    <div class="notice">
+      <span class="ico">⚠ HEADS-UP</span>
+      <div class="body">
+        <b>1 de junio de 2026 — Copilot pasa de billing por requests a billing por tokens (GitHub AI Credits).</b>
+        <span>Los multiplicadores 1x/3x desaparecen. La estrategia se mantiene (Sonnet barato, Opus caro), pero los números cambian. <b>Revisar este doc en la primera semana de junio.</b></span>
+      </div>
+    </div>
+  </header>
+
+  <div class="sect"><span class="n">01</span> Los modelos disponibles</div>
+  <div class="grid">
+    <div class="card c-sonnet">
+      <div class="role">Default · diario</div>
+      <div class="name">Claude Sonnet 4.6 <span class="mult x1">1x</span></div>
+      <div class="for">El <b>caballo de batalla</b>. Fuerte en Java/Spring y barato.</div>
+      <ul>
+        <li>Implementación de historias</li>
+        <li>Tests y refactors mecánicos</li>
+        <li>Las corridas de <code style="color:var(--green);background:rgba(30,158,114,.08)">/implement</code> de Spec Kit</li>
+        <li>Invocar prompts simples (formateo, traducción de specs)</li>
+      </ul>
+      <div class="note">Tu punto de partida en el 90% de las tareas.</div>
+    </div>
+    <div class="card c-opus">
+      <div class="role">Escalar · quirúrgico</div>
+      <div class="name">Claude Opus 4.6 <span class="mult x3">3x</span></div>
+      <div class="for">El <b>cerebro pesado</b>. Solo donde la dificultad paga el 3x.</div>
+      <ul>
+        <li>Razonamiento arquitectónico (idempotencia, Store &amp; Forward)</li>
+        <li>Revisión de un diff complejo</li>
+        <li>Debugging de concurrencia sutil (ej. <code style="color:var(--amber);background:rgba(188,133,15,.08)">@Async via this</code>)</li>
+        <li>Generar constitution / plan / refinar specs con calidad</li>
+        <li>Correr los skills migrados (refinar-spec, analizar-api, etc.)</li>
+      </ul>
+      <div class="note">⚠ 3x premium requests. Con 4 devs, el consumo se multiplica.</div>
+    </div>
+    <div class="card c-gpt">
+      <div class="role">Contraste · 2da opinión</div>
+      <div class="name">GPT-5.2 <span class="mult x1">1x</span></div>
+      <div class="for">Cuando Sonnet <b>se atasca</b>. Falla distinto, ve otra cosa.</div>
+      <ul>
+        <li>Segunda perspectiva en un problema trabado</li>
+        <li>Contraste de diseño antes de decidir</li>
+      </ul>
+      <div class="note">No es default; es la herramienta de desempate.</div>
+    </div>
+    <div class="card c-codex">
+      <div class="role">Alternativa · opcional</div>
+      <div class="name">GPT-5.3-Codex <span class="mult x1">1x</span></div>
+      <div class="for">Para <b>edición agéntica pura</b> de código.</div>
+      <ul>
+        <li>Cambios de código mecánicos multi-archivo</li>
+        <li>Alternativa a Sonnet si querés probar otro estilo</li>
+      </ul>
+      <div class="note">Útil tenerlo, no imprescindible.</div>
+    </div>
+    <div class="duck-wrap" style="opacity:0;animation:rise .6s ease forwards;animation-delay:.34s">
+    <div class="card c-duck" style="opacity:1;animation:none">
+      <div class="role">Rubber Duck · personal · fuera del IDE</div>
+      <div class="name">🦆 Claude Opus 4.7 — Claude.ai <span class="mult ext">externo · personal</span></div>
+      <div class="for">El <b>sillón de pensamiento</b>. Para razonar el approach <b>antes</b> de escribir spec o código. <span style="color:var(--red-deep)">NO es canal corporativo</span> — reglas estrictas de saneamiento abajo.</div>
+      <div class="duck-cols">
+        <div class="duck-col ok">
+          <h5>✓ Sí va al rubber duck</h5>
+          <ul>
+            <li>Preguntas genéricas de Java/Spring</li>
+            <li>Patrones abstractos ("idempotencia entre dos downstreams divergentes")</li>
+            <li>Trade-offs conceptuales</li>
+            <li>Pseudocódigo y diseños sin nombres reales</li>
+            <li>Aprender un framework o decisión técnica</li>
+            <li>Repasar antes de escribir spec en Copilot</li>
+          </ul>
+        </div>
+        <div class="duck-col no">
+          <h5>✗ Nunca va al rubber duck</h5>
+          <ul>
+            <li>PAN, CVV, tokens, números de tarjeta — ni de prueba</li>
+            <li>Nombres de sistemas (Monibyte, CaBaaS, TSYS, DAVIPRO) — usá <b>"Downstream A/B"</b></li>
+            <li>Código con lógica de negocio bancaria — paraseá a ejemplo genérico</li>
+            <li>URLs internas, hostnames, IPs, secrets, credenciales</li>
+            <li>Tickets Jira reales o specs internas</li>
+            <li>Diagramas de arquitectura con nombres reales</li>
+          </ul>
+        </div>
+      </div>
+      <div class="note">Test mental: <b>"¿lo pegarías en un thread público de Twitter?"</b> Si no, no va. Treat it like an external consultant under NDA.</div>
+    </div>
+    </div>
+  </div>
+
+  <div class="sect"><span class="n">02</span> ¿Qué estás haciendo? → qué modelo</div>
+  <div class="flow">
+    <div class="row"><div class="q">Implementar historia, tests, refactor mecánico <span>· lo de todos los días</span></div><div class="pick p-sonnet">Sonnet 4.6 · 1x</div></div>
+    <div class="row"><div class="q">Diseño / arquitectura / idempotencia / concurrencia <span>· decisiones difíciles</span></div><div class="pick p-opus">Opus 4.6 · 3x</div></div>
+    <div class="row"><div class="q">Refinar spec, analizar API, formatear Jira/Confluence <span>· skills migrados</span></div><div class="pick p-opus">Opus 4.6 · Ask</div></div>
+    <div class="row"><div class="q">Pensar el approach abstracto antes de escribir <span>· sin datos reales</span></div><div class="pick p-duck">🦆 Rubber duck</div></div>
+    <div class="row"><div class="q">Sonnet se trabó o querés segunda opinión <span>· desempate</span></div><div class="pick p-gpt">GPT-5.2 · 1x</div></div>
+    <div class="row"><div class="q">Código bancario crítico <span>· tokenización, eligibility, provisioning</span></div><div class="pick p-never">Nunca "Auto"</div></div>
+  </div>
+
+  <div class="sect"><span class="n">03</span> Reglas de oro</div>
+  <div class="rules">
+    <div class="rule"><h4>Evitá "Auto" en código crítico</h4><p>Querés control determinista de qué modelo toca el código. <code>Auto</code> puede caer silenciosamente a un modelo Standard.</p></div>
+    <div class="rule"><h4>1 sesión por sub-fase</h4><p>Una conversación de Copilot Chat por sub-fase de implementación, en modo Agent. Arrancá limpia para no contaminar el contexto.</p></div>
+    <div class="rule"><h4>Contexto estable en el repo</h4><p>AGENTS.md, constitution y los docs de negocio van en <code>/docs/</code> del repo (o el playbook). Copilot los lee del workspace, sin MCP. <b>No uses Spaces</b> — bloqueado en la org.</p></div>
+    <div class="rule"><h4>El 3x importa</h4><p>Opus se siente mejor, pero cuesta 3x. Usalo donde la dificultad lo justifica, no como driver diario — sobre todo replicado en 4 devs.</p></div>
+  </div>
+
+  <div class="sect"><span class="n">04</span> Monitoreo &amp; límites</div>
+
+  <div class="block">
+    <h3><span class="dot"></span> Dónde mirar el consumo</h3>
+    <div class="twocol">
+      <div><h4>Personal — cada dev</h4><ul>
+        <li><b>Web:</b> <code>github.com/settings/copilot</code> → barra de Premium requests</li>
+        <li><b>IntelliJ:</b> panel del plugin → Account / Usage</li>
+        <li>Reset: el <b>día 1 de cada mes a 00:00 UTC</b></li>
+      </ul></div>
+      <div><h4>Equipo / Org — Alvaro o admin</h4><ul>
+        <li><b>Web:</b> <code>github.com/orgs/DaviviendaPanama/settings/billing</code> → Usage</li>
+        <li>Reportes descargables por miembro</li>
+        <li>Pedir al owner visibilidad o reporte semanal</li>
+      </ul></div>
+    </div>
+  </div>
+
+  <div class="block">
+    <h3><span class="dot"></span> Cadencia recomendada</h3>
+    <div class="twocol">
+      <div><h4>Primer mes (rollout)</h4><ul><li><b>Lunes:</b> cada dev revisa su % personal</li><li><b>Daily corto:</b> 1 minuto, "¿alguien cerca del cap?"</li></ul></div>
+      <div><h4>Régimen estable</h4><ul><li><b>Día 25:</b> revisión mensual antes del reset</li><li>Alvaro centraliza un reporte de equipo mensual</li></ul></div>
+    </div>
+  </div>
+
+  <div class="block">
+    <h3><span class="dot"></span> Eventos críticos &amp; reservas de cupo</h3>
+    <p style="font-size:13.5px;color:var(--txt-dim);margin-bottom:14px">Pases a producción, releases, auditorías, demos: si algo se complica vamos a querer Copilot a mano. Si para esa fecha estamos cerca del cap, mal asunto. Anticipá.</p>
+    <div class="twocol">
+      <div><h4>T-7 días — check anticipado</h4><ul>
+        <li>Cada dev pulla su <b>%</b> personal</li>
+        <li>Alvaro / tech lead pulla el reporte de org</li>
+        <li>Quien esté <b>&gt;70%</b> baja a Sonnet esa semana</li>
+        <li>Pre-stage los <code>.prompt.md</code> de diagnóstico que vayan a necesitar</li>
+        <li>Pre-mortem con rubber duck (abstracto, sin datos)</li>
+      </ul></div>
+      <div><h4>T-0 — día del evento</h4><ul>
+        <li><b>AI responder designado:</b> 1-2 devs con cupo disponible quedan en standby</li>
+        <li>Tech lead reserva su seat completo para triage de incidente</li>
+        <li>El resto trabaja con Sonnet o pausa lo no-crítico</li>
+        <li>Post-evento: exportar sesiones relevantes para retro/post-mortem</li>
+      </ul></div>
+    </div>
+    <div style="margin-top:16px;padding-top:14px;border-top:1px dashed var(--line)">
+      <h4 style="font-family:var(--mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--red);font-weight:700;margin-bottom:9px">★ Pair programming como pooling de cupo</h4>
+      <p style="font-size:13.5px;color:var(--txt-dim);line-height:1.55">Modalidad <b style="color:var(--ink)">driver-navigator</b>: solo el driver tiene IDE abierto, su cuenta consume. <b style="color:var(--ink)">Dos cerebros, un cupo</b>. Ideal pre-deploy y para el trabajo crítico cuando el cupo del equipo está al filo. Trade-off: productividad por dev-hora baja, pero es el trade-off correcto cuando el cupo es el cuello de botella.</p>
+    </div>
+  </div>
+
+  <div class="block">
+    <h3><span class="dot"></span> Si llegás al tope · playbook</h3>
+    <div class="plan"><span class="letter">A</span><p><b>Cambiá el mix.</b> <span>Bajá Opus al mínimo, mové todo lo que puedas a Sonnet 4.6. Sigue funcionando, solo cambia el modelo.</span></p></div>
+    <div class="plan"><span class="letter">B</span><p><b>Esperá el reset</b> <span>del día 1. Si quedan pocos días, manejable. Mientras tanto, GPT-4.1 standard sigue disponible para tareas livianas.</span></p></div>
+    <div class="plan"><span class="letter">C</span><p><b>Pedí aumento al banco.</b> <span>Los owners de la org pueden habilitar paid overage o ampliar el budget. Justificá con el reporte de uso del mes.</span></p></div>
+    <div class="plan"><span class="letter">D</span><p><b>Descartado:</b> <span>caer a Claude.ai personal con datos del banco. Por compliance, no. Solo el rubber duck con saneamiento estricto.</span></p></div>
+  </div>
+
+  <div class="block">
+    <h3><span class="dot"></span> Anti-patterns que queman requests</h3>
+    <div class="twocol">
+      <div><ul>
+        <li><b>Reintentar prompts grandes</b> idénticos esperando otra cosa. Replanteá, no repitas.</li>
+        <li><b>Conversaciones eternas</b> de 50 turnos. Sesión nueva limpia consume menos.</li>
+      </ul></div>
+      <div><ul>
+        <li><b>Copilot Code Review</b> tiene multiplicador <b>13x</b> desde 1-jun-2026. Usalo selectivamente, no en PRs pequeños.</li>
+        <li><b>Auto-completes agresivos</b> en archivos enormes. Cerrá el archivo cuando no estés trabajándolo.</li>
+      </ul></div>
+    </div>
+  </div>
+
+  <div class="sect"><span class="n">05</span> Revisar este documento</div>
+  <div class="block">
+    <h3><span class="dot"></span> Por qué — los modelos evolucionan</h3>
+    <p style="font-size:13.5px;color:var(--txt-dim);margin-bottom:14px">Hoy Opus 4.6 es la mejor opción de razonamiento. En 3-6 meses puede ser otro modelo, o el sistema de billing puede haber cambiado (de hecho, ya cambia el 1 de junio). Este doc debe envejecer con gracia.</p>
+    <div class="twocol">
+      <div><h4>Cadencia fija</h4><ul>
+        <li><b>Quarterly review</b> (cada 3 meses)</li>
+        <li>Rota la persona que la hace</li>
+        <li>1 hora: benchmark de 3 tareas reales (implementación, refinar spec, debugging) en modelos nuevos</li>
+      </ul></div>
+      <div><h4>Triggers fuera de calendario</h4><ul>
+        <li>El banco habilita un modelo nuevo</li>
+        <li>Cambia el billing (junio 2026)</li>
+        <li>GitHub anuncia algo grande en <code>github.blog/changelog</code></li>
+        <li>Anthropic / OpenAI sacan modelo</li>
+      </ul></div>
+    </div>
+  </div>
+
+  <div class="sect"><span class="n">06</span> Gestión de conversaciones</div>
+  <div class="block">
+    <h3><span class="dot"></span> Lo que NO existe (y no busquen)</h3>
+    <div class="twocol">
+      <div><ul><li>❌ No hay <b>tags ni keywords nativos</b> en sesiones</li><li>❌ No hay <b>carpetas ni grupos</b></li></ul></div>
+      <div><ul><li>❌ <b>Una sola conversación a la vez</b> en el chat del IDE (feature request abierto)</li><li>❌ No hay pin nativo</li></ul></div>
+    </div>
+  </div>
+  <div class="block">
+    <h3><span class="dot"></span> Lo que SÍ existe y usamos</h3>
+    <div class="twocol">
+      <div><ul><li>✅ <b>Persisten</b> entre reinicios (<code>.idea/copilot/chatSessions</code>)</li><li>✅ <b>Unified sessions view</b> con filtro por agente / estado y búsqueda por título</li></ul></div>
+      <div><ul><li>✅ <b>Copilot CLI agent</b> en worktree separado = paralelismo real <span style="color:var(--amber)">(requiere habilitar "Editor preview features")</span></li><li>✅ Plugin third-party <b>Copilot Chat Exporter</b> para archivar a MD/HTML</li></ul></div>
+    </div>
+  </div>
+  <div class="block">
+    <h3><span class="dot"></span> Convención de nombres = nuestro sistema de tags</h3>
+    <p style="font-size:13.5px;color:var(--txt-dim);margin-bottom:14px">Como el título es el único metadata buscable, <b style="color:var(--ink)">el título ES el tag</b>. Renombrá la sesión apenas la abrís.</p>
+    <div style="background:var(--panel);border:1px solid var(--line);border-left:3px solid var(--teal);border-radius:8px;padding:14px 16px;margin-bottom:14px;font-family:var(--mono);font-size:13px;color:var(--teal)">[TICKET]-[FASE]-[VERBO]-[TOPIC]</div>
+    <div class="twocol">
+      <div><h4>Ejemplos</h4><ul>
+        <li><code>CCACCS-254-P3-impl-redis-config</code></li>
+        <li><code>CCACCS-254-P4-debug-async-this</code></li>
+        <li><code>CCACCS-254-design-store-forward</code></li>
+        <li><code>CCACCS-254-refine-spec-monibyte</code></li>
+        <li><code>CCACCS-254-review-pr-redis</code></li>
+      </ul></div>
+      <div><h4>Vocabulario de verbos</h4><ul>
+        <li><code>impl</code> · implementación de código</li>
+        <li><code>debug</code> · bug específico</li>
+        <li><code>design</code> · diseño / arquitectura</li>
+        <li><code>refine-spec</code> · skill de refinar spec</li>
+        <li><code>analyze-api</code> · skill de analizar API</li>
+        <li><code>review</code> · revisar PR / diff</li>
+        <li><code>investigate</code> · spike / exploración</li>
+        <li><code>docs</code> · documentación</li>
+      </ul></div>
+    </div>
+    <div style="margin-top:14px;padding-top:12px;border-top:1px dashed var(--line);font-size:13px;color:var(--txt-dim)">
+      <b style="color:var(--ink);font-family:var(--mono);font-size:11.5px;letter-spacing:.10em;text-transform:uppercase">Pin manual con prefijo</b><br>
+      <code>★</code> o <code>[ACTIVA]</code> al inicio del título — la sesión actual sube al tope. <code>[PAUSE]</code> para sesiones esperando algo externo. Sin prefijo = histórica.
+    </div>
+  </div>
+  <div class="block">
+    <h3><span class="dot"></span> Flujo de archivado &amp; limpieza</h3>
+    <div class="plan"><span class="letter">1</span><p><b>Sesiones valiosas</b> <span>(la del diseño que se usó, la del post-mortem) → exportar a Markdown → commitear a <code style="background:rgba(47,142,156,.08);color:var(--teal)">/docs/copilot-sessions/CCACCS-254/P3/</code> → borrar del IDE.</span></p></div>
+    <div class="plan"><span class="letter">2</span><p><b>Viernes EOD:</b> <span>cada dev cierra las sesiones de la semana que no continúan.</span></p></div>
+    <div class="plan"><span class="letter">3</span><p><b>Fin de sub-fase:</b> <span>export de relevantes al repo, después borrar. Próxima fase arranca limpia.</span></p></div>
+    <div class="plan"><span class="letter">4</span><p><b>Sin actividad &gt; 2 semanas</b> <span>→ se exporta o se borra. No acumular.</span></p></div>
+    <div style="margin-top:14px;padding-top:12px;border-top:1px dashed var(--line);font-size:13px;color:var(--txt-dim)">
+      <b style="color:var(--red);font-family:var(--mono);font-size:11.5px;letter-spacing:.10em;text-transform:uppercase">Anti-patterns</b><br>
+      ❌ Misma sesión abierta 3 semanas "porque tiene contexto" — el contexto se infla, gasta más tokens por turno. <br>
+      ❌ Sesiones sin renombrar — en 2 semanas no encontrás nada. <br>
+      ❌ Dos tickets mezclados en una sesión.
+    </div>
+  </div>
+
+  <footer>
+    <div>Repo · <b>cca-copilot-playbook</b> (sugerido) · /docs/<br>Render · GitHub Pages + link en Confluence</div>
+    <div class="right">Punto 1 de 6 del taller · 6 secciones<br><b>Última revisión: 28-may-2026</b> · próxima: 1-sem de junio</div>
+  </footer>
+
+</div>
+</body>
+</html>
