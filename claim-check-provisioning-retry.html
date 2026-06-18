@@ -1,0 +1,548 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Retry de provisioning sin exponer el PAN · Claim-check por referencia</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mermaid/10.6.1/mermaid.min.js"></script>
+<style>
+  :root{
+    --ink:#16181D;
+    --paper:#F6F5F1;
+    --surface:#FFFFFF;
+    --line:#E4E1D8;
+    --line-2:#EFEDE6;
+    --muted:#5C5F66;
+    --amber:#C07A12;
+    --amber-soft:#F4E6C8;
+    --amber-line:#E3C98C;
+    --teal:#0F756F;
+    --teal-soft:#DCEBE9;
+    --red:#AE382D;
+    --red-soft:#F4DDD9;
+  }
+  *{box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  body{
+    margin:0;
+    background:var(--paper);
+    color:var(--ink);
+    font-family:"IBM Plex Sans",system-ui,sans-serif;
+    font-size:16px;
+    line-height:1.55;
+    -webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:980px;margin:0 auto;padding:0 28px;}
+  .mono{font-family:"IBM Plex Mono",ui-monospace,monospace;}
+
+  /* ---- Eyebrow / labels ---- */
+  .eyebrow{
+    font-family:"IBM Plex Mono",monospace;
+    font-size:12px;letter-spacing:.16em;text-transform:uppercase;
+    color:var(--amber);font-weight:600;
+  }
+  h1,h2,h3{font-family:"Space Grotesk",sans-serif;line-height:1.12;letter-spacing:-.01em;margin:0;}
+
+  /* ---- Header ---- */
+  header.hero{
+    background:var(--ink);color:#F3F1EC;
+    padding:64px 0 0;
+    border-bottom:4px solid var(--amber);
+  }
+  header.hero .eyebrow{color:var(--amber-line);}
+  header.hero h1{
+    font-size:clamp(30px,4.6vw,52px);font-weight:700;color:#FBFAF6;
+    margin:14px 0 18px;max-width:18ch;
+  }
+  header.hero h1 .hl{color:var(--amber-line);}
+  header.hero p.lede{
+    font-size:18px;color:#C7C5BD;max-width:62ch;margin:0 0 36px;
+  }
+  .meta{
+    display:flex;flex-wrap:wrap;gap:0;border-top:1px solid #2C2F36;
+    font-family:"IBM Plex Mono",monospace;font-size:12.5px;
+  }
+  .meta div{
+    padding:14px 22px 16px 0;margin-right:22px;color:#9A9DA4;
+    border-right:1px solid #2C2F36;
+  }
+  .meta div:last-child{border-right:none;}
+  .meta b{display:block;color:#EDEBE4;font-weight:500;margin-top:3px;font-size:13px;letter-spacing:.02em;}
+  .meta .status{color:var(--amber-line);}
+
+  /* ---- Section scaffold ---- */
+  section{padding:62px 0;border-bottom:1px solid var(--line);}
+  section:last-of-type{border-bottom:none;}
+  .sec-head{display:flex;align-items:baseline;gap:14px;margin-bottom:8px;}
+  .sec-num{font-family:"IBM Plex Mono",monospace;font-size:13px;color:var(--amber);font-weight:600;}
+  h2{font-size:clamp(23px,3vw,32px);font-weight:600;}
+  .sec-sub{color:var(--muted);max-width:64ch;margin:14px 0 30px;font-size:16.5px;}
+
+  /* ---- Diagram frame ---- */
+  .diagram{
+    background:var(--surface);border:1px solid var(--line);border-radius:14px;
+    padding:26px 18px;text-align:center;overflow-x:auto;
+  }
+  .diagram .mermaid{min-width:520px;}
+  .cap{font-family:"IBM Plex Mono",monospace;font-size:12px;color:var(--muted);margin-top:14px;}
+
+  /* ---- Problem callouts ---- */
+  .grid-2{display:grid;grid-template-columns:1fr 1fr;gap:18px;}
+  .card{
+    background:var(--surface);border:1px solid var(--line);border-radius:13px;padding:22px 24px;
+  }
+  .card h3{font-size:18px;font-weight:600;margin-bottom:8px;}
+  .card p{margin:0;color:var(--muted);font-size:15px;}
+  .tag{
+    display:inline-block;font-family:"IBM Plex Mono",monospace;font-size:11px;
+    letter-spacing:.08em;text-transform:uppercase;padding:3px 9px;border-radius:999px;font-weight:600;margin-bottom:12px;
+  }
+  .tag.ok{background:var(--teal-soft);color:var(--teal);}
+  .tag.fail{background:var(--red-soft);color:var(--red);}
+  .tag.rule{background:var(--amber-soft);color:var(--amber);}
+
+  /* ---- Signature: claim-check ticket ---- */
+  .ticket-zone{margin-top:6px;}
+  .ticket{
+    display:flex;background:var(--surface);border:1px solid var(--line);
+    border-radius:16px;overflow:hidden;box-shadow:0 1px 0 var(--line-2);
+    position:relative;
+  }
+  .ticket .stub{
+    background:#FBF4E4;border-right:2px dashed var(--amber-line);
+    padding:24px 26px;width:46%;position:relative;
+  }
+  .ticket .stub::before,.ticket .stub::after{
+    content:"";position:absolute;right:-9px;width:16px;height:16px;border-radius:50%;
+    background:var(--paper);border:1px solid var(--line);
+  }
+  .ticket .stub::before{top:-9px;}
+  .ticket .stub::after{bottom:-9px;}
+  .ticket .vault{padding:24px 26px;flex:1;}
+  .ticket .lbl{font-family:"IBM Plex Mono",monospace;font-size:11px;letter-spacing:.1em;text-transform:uppercase;font-weight:600;}
+  .ticket .stub .lbl{color:var(--amber);}
+  .ticket .vault .lbl{color:var(--red);}
+  .ticket .field{font-family:"IBM Plex Mono",monospace;font-size:14px;margin-top:10px;color:var(--ink);}
+  .ticket .field span{color:var(--muted);}
+  .ticket .travels{margin-top:16px;font-size:12.5px;color:var(--teal);font-weight:600;}
+  .ticket .locked{margin-top:16px;font-size:12.5px;color:var(--red);font-weight:600;}
+  .pan-mask{font-family:"IBM Plex Mono",monospace;font-size:15px;letter-spacing:.04em;margin-top:10px;}
+  .pan-mask .lock{filter:grayscale(0);}
+
+  /* ---- Applies / not applies ---- */
+  .split{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-top:8px;}
+  .panel{border:1px solid var(--line);border-radius:13px;overflow:hidden;background:var(--surface);}
+  .panel .ph{padding:14px 22px;font-family:"Space Grotesk",sans-serif;font-weight:600;font-size:16px;display:flex;align-items:center;gap:9px;}
+  .panel.yes .ph{background:var(--teal-soft);color:var(--teal);}
+  .panel.no .ph{background:var(--red-soft);color:var(--red);}
+  .panel ul{margin:0;padding:18px 22px 20px 20px;list-style:none;}
+  .panel li{position:relative;padding-left:22px;margin-bottom:12px;font-size:15px;color:var(--ink);}
+  .panel li:last-child{margin-bottom:0;}
+  .panel li::before{position:absolute;left:0;top:0;font-family:"IBM Plex Mono",monospace;font-weight:600;}
+  .panel.yes li::before{content:"+";color:var(--teal);}
+  .panel.no li::before{content:"–";color:var(--red);}
+  .panel li b{font-weight:600;}
+
+  /* ---- Requirements + strategies ---- */
+  .req-list{margin:10px 0 0;padding:0;list-style:none;counter-reset:r;}
+  .req-list li{
+    counter-increment:r;position:relative;padding:14px 18px 14px 54px;
+    border:1px solid var(--line);border-radius:11px;background:var(--surface);margin-bottom:10px;font-size:15px;
+  }
+  .req-list li::before{
+    content:counter(r,decimal-leading-zero);position:absolute;left:18px;top:14px;
+    font-family:"IBM Plex Mono",monospace;font-size:13px;color:var(--amber);font-weight:600;
+  }
+  .req-list li b{font-weight:600;}
+
+  .chips{display:flex;flex-wrap:wrap;gap:9px;margin-top:6px;}
+  .chip{
+    font-family:"IBM Plex Mono",monospace;font-size:13px;background:var(--surface);
+    border:1px solid var(--line);border-radius:9px;padding:9px 13px;color:var(--ink);
+  }
+  .chip span{color:var(--muted);}
+  .note{font-size:13.5px;color:var(--muted);margin-top:14px;font-style:italic;}
+
+  /* ---- Glossary ---- */
+  .gloss{margin-top:8px;border:1px solid var(--line);border-radius:13px;overflow:hidden;background:var(--surface);}
+  .gloss .row{display:grid;grid-template-columns:215px 1fr;border-bottom:1px solid var(--line-2);}
+  .gloss .row:last-child{border-bottom:none;}
+  .gloss dt{font-family:"Space Grotesk",sans-serif;font-weight:600;font-size:15.5px;padding:18px 20px;background:#FBFAF6;border-right:1px solid var(--line-2);}
+  .gloss dt small{display:block;font-family:"IBM Plex Mono",monospace;font-weight:500;font-size:10.5px;letter-spacing:.07em;text-transform:uppercase;color:var(--amber);margin-top:6px;}
+  .gloss dd{margin:0;padding:18px 22px;font-size:14.5px;color:var(--muted);}
+  .gloss dd b{color:var(--ink);font-weight:600;}
+  @media (max-width:720px){.gloss .row{grid-template-columns:1fr;}.gloss dt{border-right:none;border-bottom:1px solid var(--line-2);}}
+
+  /* ---- Options comparison ---- */
+  table.opts{width:100%;border-collapse:collapse;margin-top:8px;font-size:14.5px;background:var(--surface);
+    border:1px solid var(--line);border-radius:13px;overflow:hidden;}
+  table.opts th,table.opts td{text-align:left;padding:15px 16px;border-bottom:1px solid var(--line-2);vertical-align:top;}
+  table.opts thead th{
+    font-family:"IBM Plex Mono",monospace;font-size:11.5px;letter-spacing:.08em;text-transform:uppercase;
+    color:var(--muted);background:#FBFAF6;font-weight:600;
+  }
+  table.opts tbody tr:last-child td{border-bottom:none;}
+  table.opts .opt{font-family:"Space Grotesk",sans-serif;font-weight:600;font-size:15px;}
+  .pill{display:inline-block;font-family:"IBM Plex Mono",monospace;font-size:10.5px;letter-spacing:.06em;
+    text-transform:uppercase;padding:2px 8px;border-radius:999px;font-weight:600;margin-left:8px;vertical-align:middle;}
+  .pill.rec{background:var(--amber-soft);color:var(--amber);}
+  .eff{font-family:"IBM Plex Mono",monospace;font-weight:600;}
+  .eff.low{color:var(--teal);}
+  .eff.mid{color:var(--amber);}
+  .eff.high{color:var(--red);}
+  .discard{margin-top:16px;font-size:14px;color:var(--muted);}
+  .discard b{color:var(--red);font-weight:600;}
+
+  /* ---- Durable Functions block ---- */
+  .df-grid{display:grid;grid-template-columns:1.05fr .95fr;gap:24px;align-items:start;}
+  .df-grid ul{margin:8px 0 0;padding-left:18px;}
+  .df-grid li{margin-bottom:10px;font-size:15px;}
+  .df-grid li b{font-weight:600;}
+
+  /* ---- Recommendation ---- */
+  section.rec{background:var(--ink);color:#F1EFE9;border-bottom:none;}
+  section.rec .eyebrow{color:var(--amber-line);}
+  section.rec h2{color:#FBFAF6;}
+  section.rec .sec-num{color:var(--amber-line);}
+  .rec-line{
+    display:flex;gap:16px;padding:18px 0;border-bottom:1px solid #2C2F36;align-items:flex-start;
+  }
+  .rec-line:last-child{border-bottom:none;}
+  .rec-k{font-family:"IBM Plex Mono",monospace;font-size:12px;letter-spacing:.08em;text-transform:uppercase;
+    color:var(--amber-line);font-weight:600;min-width:130px;padding-top:3px;}
+  .rec-v{font-size:16px;color:#DDDBD3;}
+  .rec-v b{color:#FBFAF6;font-weight:600;}
+  .rec-v .mono{color:var(--amber-line);}
+
+  footer{padding:30px 0 60px;color:var(--muted);font-size:13px;font-family:"IBM Plex Mono",monospace;}
+
+  @media (max-width:720px){
+    .grid-2,.split,.df-grid{grid-template-columns:1fr;}
+    .ticket{flex-direction:column;}
+    .ticket .stub{width:100%;border-right:none;border-bottom:2px dashed var(--amber-line);}
+    .ticket .stub::before{top:auto;bottom:-9px;left:-9px;right:auto;}
+    .ticket .stub::after{bottom:-9px;right:-9px;}
+    .meta div{border-right:none;}
+  }
+
+  @media print{
+    body{background:#fff;}
+    header.hero,section.rec{-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+    section{break-inside:avoid;page-break-inside:avoid;}
+    .diagram,.ticket,.panel,table.opts{break-inside:avoid;}
+  }
+  @media (prefers-reduced-motion:reduce){html{scroll-behavior:auto;}}
+</style>
+</head>
+<body>
+
+<header class="hero">
+  <div class="wrap">
+    <div class="eyebrow">Decisión de arquitectura · ca-baas-tokenization-gateway</div>
+    <h1>Reintentar el provisioning <span class="hl">sin sacar el PAN</span> de su bóveda</h1>
+    <p class="lede">Cuando la tokenización (VTS/MDES) o el enrolamiento fallan de forma intermitente, el proceso debe quedar en espera y reintentarse — sin almacenar datos sensibles de la tarjeta. La pieza que lo permite es el patrón <b>claim-check por referencia</b>.</p>
+    <div class="meta">
+      <div>Servicio<b>ca-baas-tokenization-gateway</b></div>
+      <div>Contexto<b>Retry de provisioning / enrolamiento</b></div>
+      <div>Estado<b class="status">Propuesta de diseño</b></div>
+      <div>Restricción<b>Bajo esfuerzo · 1 dev</b></div>
+    </div>
+  </div>
+</header>
+
+<!-- 1. FLUJO -->
+<section>
+  <div class="wrap">
+    <div class="sec-head"><span class="sec-num">01</span><h2>El flujo y dónde aparece la falla</h2></div>
+    <p class="sec-sub">La falla intermitente puede ocurrir en dos puntos: el <b>enrolamiento</b> al wallet y la <b>tokenización</b> en la red. Ambos se reintentan igual — por referencia, sin transportar el PAN.</p>
+    <div class="diagram">
+      <div class="mermaid">
+flowchart TD
+  A[Solicitud] --> B[Scoring]
+  B --> C[Aprobacion]
+  C --> D[Creacion de cuenta de credito]
+  D --> E[Emision de tarjeta virtual]
+  E --> F[Aceptacion de terminos]
+  F --> G[Activacion]
+  G --> H[Enrolamiento Wallet]
+  H --> I[Tokenizacion]
+  I --> J[Uso inmediato]
+  H -.->|timeout / 5xx| P[Pending<br/>solo referencia]
+  I -.->|timeout / 5xx| P
+  P -.->|retry con backoff| H
+  P -.->|retry con backoff| I
+  classDef crit fill:#F4E6C8,stroke:#C07A12,color:#16181D;
+  classDef fail fill:#F4DDD9,stroke:#AE382D,color:#16181D;
+  class G,H,I crit;
+  class P fail;
+      </div>
+      <div class="cap">Dos puntos de falla intermitente — enrolamiento y tokenización — y un único mecanismo de reintento por referencia.</div>
+    </div>
+  </div>
+</section>
+
+<!-- 2. PROBLEMA -->
+<section>
+  <div class="wrap">
+    <div class="sec-head"><span class="sec-num">02</span><h2>El problema, bien planteado</h2></div>
+    <p class="sec-sub">La pregunta no es <i>dónde guardo el PAN temporalmente</i>. Es <i>por qué necesito guardarlo</i>. Casi siempre, no hace falta.</p>
+    <div class="grid-2">
+      <div class="card">
+        <span class="tag ok">Estado real</span>
+        <h3>La tarjeta ya está activa</h3>
+        <p>El PAN existe y es consultable desde el sistema emisor / Card Vault. La activación fue exitosa; lo que falló es un sistema aguas abajo.</p>
+      </div>
+      <div class="card">
+        <span class="tag fail">Falla</span>
+        <h3>Enrolamiento o tokenización falla</h3>
+        <p>Timeout o 5xx transitorio al enrolar en el wallet o al emitir el token en la red. El proceso debe quedar en espera y reintentarse luego, sin perder la operación.</p>
+      </div>
+      <div class="card">
+        <span class="tag rule">Regla dura</span>
+        <h3>No persistir PAN / CVV / Exp</h3>
+        <p>Guardarlos en un bucket o tabla expande el alcance PCI-DSS: rotación de llaves, accesos, auditoría, retención y borrado seguro. Es la última opción, no la primera.</p>
+      </div>
+      <div class="card">
+        <span class="tag rule">Insight</span>
+        <h3>Reintentar por referencia</h3>
+        <p>Para reintentar basta identificar la operación. El dato sensible se vuelve a resolver justo en el momento del reintento, contra su fuente autoritativa.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 3. CLAIM-CHECK -->
+<section>
+  <div class="wrap">
+    <div class="sec-head"><span class="sec-num">03</span><h2>Claim-check por referencia</h2></div>
+    <p class="sec-sub">En una frase: <b>no movés el dato sensible por la arquitectura; movés un comprobante que lo representa, y resolvés el dato real solo cuando y donde se necesita.</b> Es la ficha del valet — la ficha viaja, el carro se queda en el parqueo.</p>
+
+    <div class="ticket-zone">
+      <div class="ticket">
+        <div class="stub">
+          <div class="lbl">Referencia · viaja por el sistema</div>
+          <div class="field"><span>cardId</span>  100045-AA</div>
+          <div class="field"><span>customerId</span>  999-CR</div>
+          <div class="field"><span>activationId</span>  act_77b1…</div>
+          <div class="field" style="margin-top:13px"><span>enrollmentId / tokenRequestId</span></div>
+          <div class="field" style="margin-top:2px">  trq_9f2c…  <span style="color:var(--amber)">↤ idempotencia</span></div>
+          <div class="travels">→ va en el mensaje, en la cola, en la tabla de pendientes</div>
+        </div>
+        <div class="vault">
+          <div class="lbl">PAN · permanece en la bóveda</div>
+          <div class="pan-mask">🔒 4111 ●●●● ●●●● 1111</div>
+          <div class="field"><span>exp</span>  ●● / ●●</div>
+          <div class="locked">↳ se resuelve JIT, en memoria, nunca se persiste ni se loguea</div>
+        </div>
+      </div>
+    </div>
+
+    <h3 style="font-size:19px;margin:36px 0 12px;">Qué incluir en la referencia, por escenario</h3>
+    <p style="color:var(--muted);font-size:15px;margin:0 0 14px;max-width:66ch;">Sí: <b>cardId, customerId y activationId</b> se incluyen — son identidad y correlación (en enrolamiento, además, claves para reanudar contra el wallet correcto y notificar al cliente). Pero esos tres <b>no</b> son la llave de idempotencia: la que evita duplicar es <span class="mono">enrollmentId</span> (enrolamiento) o <span class="mono">tokenRequestId</span> (tokenización).</p>
+    <table class="opts">
+      <thead><tr><th>Campo</th><th>Enrolamiento</th><th>Tokenización</th><th>Rol</th></tr></thead>
+      <tbody>
+        <tr><td class="mono">cardId</td><td>✓</td><td>✓</td><td>Identidad de la tarjeta</td></tr>
+        <tr><td class="mono">customerId</td><td>✓</td><td>✓</td><td>Dueño · notificación al cliente</td></tr>
+        <tr><td class="mono">activationId</td><td>✓</td><td>✓</td><td>Correlación · traza a la activación que originó el estado</td></tr>
+        <tr><td class="mono">enrollmentId</td><td>✓ <span class="pill rec">idempotencia</span></td><td>—</td><td>Evita doble enrolamiento</td></tr>
+        <tr><td class="mono">tokenRequestId</td><td>—</td><td>✓ <span class="pill rec">idempotencia</span></td><td>Evita doble emisión de token</td></tr>
+        <tr><td class="mono">walletProvider · deviceId</td><td>✓</td><td>✓</td><td>Destino: Apple/Google, dispositivo</td></tr>
+        <tr><td class="mono">state · retryCount · nextRetryAt · lastError</td><td>✓</td><td>✓</td><td>Control del reintento</td></tr>
+      </tbody>
+    </table>
+
+    <h3 style="font-size:19px;margin:36px 0 12px;">Cuándo aplica y cuándo no</h3>
+    <div class="split">
+      <div class="panel yes">
+        <div class="ph">✓ Aplica cuando</div>
+        <ul>
+          <li>El dato sensible es <b>re-consultable</b> desde una fuente autoritativa (Card Service, vault, emisor) al momento del reintento.</li>
+          <li>El reintento solo necesita <b>identificar</b> la operación, no transportar el CHD.</li>
+          <li>Existe una <b>llave de idempotencia</b> estable (<span class="mono">tokenRequestId</span>) que evita emitir tokens duplicados.</li>
+          <li>El objetivo es <b>minimizar alcance PCI</b> y no persistir datos de tarjeta.</li>
+        </ul>
+      </div>
+      <div class="panel no">
+        <div class="ph">✗ No aplica / limitaciones</div>
+        <ul>
+          <li>El dato se genera <b>una sola vez</b> y no se puede volver a consultar (PAN one-shot) → ahí se necesita un vault con payload, no solo la referencia.</li>
+          <li>La fuente autoritativa <b>no está disponible</b> en el reintento: si el emisor también está caído, el re-fetch tampoco resuelve.</li>
+          <li>El re-fetch tiene <b>latencia o costo</b> altos en cada intento.</li>
+          <li>La operación <b>no es idempotente</b> y no hay correlación estable → riesgo de duplicar.</li>
+          <li><b>Yellow-path (ID&amp;V):</b> la verificación del tarjetahabiente no es un retry técnico; es otra rama, no la resuelve el claim-check.</li>
+        </ul>
+      </div>
+    </div>
+
+    <h3 style="font-size:19px;margin:36px 0 12px;">Lo requerido para usarlo</h3>
+    <ul class="req-list">
+      <li><b>Fuente autoritativa o vault</b> que exponga el dato por referencia de forma segura (Card Vault Service / emisor / Key Vault).</li>
+      <li><b>Identificador estable</b> por operación: <span class="mono">cardId</span>, <span class="mono">tokenRequestId</span> / <span class="mono">enrollmentId</span>.</li>
+      <li><b>Idempotencia end-to-end</b>, anclada a ese identificador, para no duplicar la emisión del token.</li>
+      <li><b>Máquina de estados</b> que separe <span class="mono">PENDING_RETRY</span> (transitorio) de <span class="mono">PENDING_VERIFICATION</span> (yellow-path).</li>
+      <li><b>Resolución JIT en memoria</b>: TLS, control de acceso y cero logging del CHD.</li>
+    </ul>
+
+    <h3 style="font-size:19px;margin:36px 0 12px;">Estrategias técnicas para implementarlo <span style="font-weight:400;font-size:14px;color:var(--muted);">(solo mencionadas)</span></h3>
+    <div class="chips">
+      <div class="chip">Referencia opaca + <span>re-fetch JIT</span></div>
+      <div class="chip">Claim-Check pattern <span>(EIP)</span></div>
+      <div class="chip">Vaulting / tokenización del dato <span>→ referenceId</span></div>
+      <div class="chip">Correlation / idempotency key</div>
+      <div class="chip">Tabla de pendientes + job programado</div>
+      <div class="chip">Outbox + cola con DLQ <span>(reference-only)</span></div>
+      <div class="chip">Service Bus <span>scheduled / deferred</span></div>
+      <div class="chip">Orquestación durable / Saga</div>
+      <div class="chip">Envelope encryption <span>(si algo se persiste)</span></div>
+    </div>
+    <p class="note">El CVV normalmente no se requiere para push/in-app provisioning — viaja PAN + expiración. Aun así, ninguno se persiste: se resuelven JIT.</p>
+  </div>
+</section>
+
+<!-- 4. OPCIONES -->
+<section>
+  <div class="wrap">
+    <div class="sec-head"><span class="sec-num">04</span><h2>Opciones de arquitectura</h2></div>
+    <p class="sec-sub">Todas comparten el mismo principio (referencia-only + consumidor idempotente). Cambia el motor de reintento. Filtradas por la restricción de bajo esfuerzo.</p>
+    <table class="opts">
+      <thead>
+        <tr><th>Opción</th><th>Esfuerzo</th><th>Cuándo</th><th>Trade-off</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="opt">Tabla de pendientes + job programado<span class="pill rec">Recomendada</span></td>
+          <td><span class="eff low">Bajo</span></td>
+          <td>Default. Spring <span class="mono">@Scheduled</span> / Quartz, re-fetch JIT, backoff en <span class="mono">nextRetryAt</span>.</td>
+          <td>Cero infra nueva. Se revisa en un PR sin cambios de plataforma. Es polling, pero sobra para volúmenes de emisión.</td>
+        </tr>
+        <tr>
+          <td class="opt">Service Bus + DLQ + scheduled delivery</td>
+          <td><span class="eff mid">Bajo–medio</span></td>
+          <td>Si Service Bus <b>ya</b> es capacidad de la plataforma.</td>
+          <td>Retry, backoff y dead-lettering nativos. Si hay que provisionarlo desde cero, sube el esfuerzo.</td>
+        </tr>
+        <tr>
+          <td class="opt">Durable Functions (Saga)</td>
+          <td><span class="eff mid">Medio</span></td>
+          <td>Si activación + tokenización son un mismo flujo con SLA y compensaciones, y ya se usa Azure Functions.</td>
+          <td>El hold &amp; retry es nativo. Pero introduce un runtime distinto a Spring Boot.</td>
+        </tr>
+      </tbody>
+    </table>
+    <p class="discard"><b>Descartadas por esfuerzo:</b> Kafka y motores de orquestación nuevos (Temporal, Camunda, Conductor) — son plataformas, no features; no se justifica standup de infra para un retry. Vault solo si el PAN no es re-consultable; si ya existe Key Vault, reusarlo es barato.</p>
+  </div>
+</section>
+
+<!-- 5. DURABLE FUNCTIONS -->
+<section>
+  <div class="wrap">
+    <div class="sec-head"><span class="sec-num">05</span><h2>Opción Durable Functions (Saga)</h2></div>
+    <p class="sec-sub">El orquestador es dueño del <i>hold &amp; retry</i> y persiste el <b>estado del workflow</b>, nunca el CHD. Es la opción cuando el reintento necesita esperar, compensar y ser observable como una transacción de negocio.</p>
+    <div class="df-grid">
+      <div>
+        <ul>
+          <li><b>Durable timers</b> para la espera entre reintentos: el proceso queda dormido sin consumir recursos y despierta solo para reintentar.</li>
+          <li><b>Estado persistido automáticamente</b>: la saga sobrevive caídas y redeploys sin que vos manejes la tabla de control.</li>
+          <li><b>Reintento idempotente</b> anclado a <span class="mono">enrollmentId</span> / <span class="mono">tokenRequestId</span>; en cada vuelta resuelve el PAN JIT desde la fuente autoritativa.</li>
+          <li><b>Rama de yellow-path</b> separada del retry: la saga espera la verificación (ID&amp;V) en lugar de reintentar en loop.</li>
+          <li><b>Tope de intentos → DLQ</b> para intervención manual; visibilidad de saga end-to-end.</li>
+          <li><b>Costo:</b> es un runtime distinto a Spring Boot. Vale la pena solo si Azure Functions ya está en casa.</li>
+        </ul>
+      </div>
+      <div class="diagram">
+        <div class="mermaid">
+stateDiagram-v2
+  [*] --> ACTIVATED
+  ACTIVATED --> PENDING_ENROLLMENT
+  PENDING_ENROLLMENT --> ENROLLED: Wallet OK
+  PENDING_ENROLLMENT --> RETRY_ENROLL: timeout / 5xx
+  RETRY_ENROLL --> PENDING_ENROLLMENT: backoff
+  RETRY_ENROLL --> FAILED: max intentos
+  ENROLLED --> PENDING_TOKENIZATION
+  PENDING_TOKENIZATION --> TOKENIZED: VTS/MDES OK
+  PENDING_TOKENIZATION --> RETRY_TOKEN: timeout / 5xx
+  RETRY_TOKEN --> PENDING_TOKENIZATION: backoff
+  RETRY_TOKEN --> FAILED: max intentos
+  PENDING_TOKENIZATION --> PENDING_VERIFICATION: yellow path / ID&V
+  PENDING_VERIFICATION --> TOKENIZED: verificacion OK
+  TOKENIZED --> [*]
+  FAILED --> [*]
+        </div>
+        <div class="cap">Saga end-to-end: enrolamiento y tokenización, cada uno con su propio retry; la verificación es rama aparte.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 6. GLOSARIO -->
+<section>
+  <div class="wrap">
+    <div class="sec-head"><span class="sec-num">06</span><h2>Glosario de términos</h2></div>
+    <p class="sec-sub">Los términos que aparecen en el flujo y en las opciones, aclarados para que la página sirva por igual a negocio, seguridad y devs nuevos.</p>
+    <dl class="gloss">
+      <div class="row"><dt>In-App Provisioning<small>Enrolamiento</small></dt><dd>Agregar una tarjeta a un wallet <b>desde dentro de una app</b> — la del banco o el flujo de alta del wallet — sin digitar el PAN a mano. Se apoya en las APIs del wallet (Apple/Google) y en el TSP de la red para tokenizar.</dd></div>
+      <div class="row"><dt>Push Provisioning<small>Enrolamiento</small></dt><dd>Variante <b>iniciada por el emisor</b>: el banco "empuja" la credencial al wallet con un toque — el botón "Agregar a Apple/Google Wallet" dentro de su propia app. Es el caso estrella de Digital First; un subconjunto del in-app provisioning.</dd></div>
+      <div class="row"><dt>Azure Service Bus<small>Mensajería</small></dt><dd>Broker de mensajería gestionado (colas y topics) con <b>reintentos, dead-lettering, mensajes programados/diferidos y sessions</b> nativos. Desacopla servicios con entrega asíncrona confiable.</dd></div>
+      <div class="row"><dt>DLQ · Dead Letter Queue<small>Mensajería</small></dt><dd>Subcola donde caen los mensajes que <b>no se pudieron procesar</b> — máximo de reintentos, mensaje veneno, expirados — para inspección o manejo manual, sin perderlos ni bloquear la cola principal.</dd></div>
+      <div class="row"><dt>Polling<small>Patrón</small></dt><dd>Un worker pregunta <b>a intervalos</b> "¿hay pendientes vencidos?" — el job consultando la tabla por <span class="mono">nextRetryAt</span>. Opuesto a event-driven (te notifican). Trade-off: simplicidad contra latencia y consultas en vacío.</dd></div>
+      <div class="row"><dt>Fuente autoritativa<small>System of record</small></dt><dd>El sistema <b>dueño de la verdad</b> de un dato; de donde se vuelve a leer en el reintento. Para el <b>PAN</b>: el lado emisor — el procesador emisor (p. ej. <b>TSYS</b>) y/o el card management / vault del banco. Para el <b>token</b>: la red (<b>Visa VTS / Mastercard MDES</b>). Aclaración: Visa/Mastercard son autoritativas del <i>token</i> y su ciclo de vida, <b>no del PAN</b> — el PAN se re-consulta del emisor/TSYS, no de la red.</dd></div>
+    </dl>
+  </div>
+</section>
+
+<!-- 7. RECOMENDACIÓN -->
+<section class="rec">
+  <div class="wrap">
+    <div class="sec-head"><span class="sec-num">07</span><h2>Recomendación</h2></div>
+    <div style="margin-top:18px;">
+      <div class="rec-line">
+        <div class="rec-k">Siempre</div>
+        <div class="rec-v">Referencia-only + consumidor idempotente. La referencia <span class="mono">tokenRequestId</span> es a la vez puntero de re-fetch y llave de idempotencia.</div>
+      </div>
+      <div class="rec-line">
+        <div class="rec-k">Motor</div>
+        <div class="rec-v"><b>Tabla de pendientes + job programado.</b> Bajo esfuerzo, sin tocar plataforma, revisable en un PR. Service Bus + DLQ si ya existe; Durable Functions si el flujo amerita saga y Azure Functions ya está en casa.</div>
+      </div>
+      <div class="rec-line">
+        <div class="rec-k">Estado</div>
+        <div class="rec-v">Máquina de estados que separa <span class="mono">PENDING_RETRY</span> de <span class="mono">PENDING_VERIFICATION</span>. Yellow-path no es retry.</div>
+      </div>
+      <div class="rec-line">
+        <div class="rec-k">Vault</div>
+        <div class="rec-v">Solo si se confirma que el PAN no es re-consultable. Nunca un bucket.</div>
+      </div>
+      <div class="rec-line">
+        <div class="rec-k">Norte (ADR)</div>
+        <div class="rec-v">Desacoplar tokenización de emisión: que el provisioning nunca vea el PAN. Re-arquitectura, no para ahora.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">claim-check-provisioning-retry · Davibank · ca-baas-tokenization-gateway · propuesta de diseño</div>
+</footer>
+
+<script>
+  mermaid.initialize({
+    startOnLoad:true,
+    theme:'base',
+    themeVariables:{
+      fontFamily:'IBM Plex Mono, monospace',
+      fontSize:'13px',
+      primaryColor:'#FFFFFF',
+      primaryTextColor:'#16181D',
+      primaryBorderColor:'#C9C5BA',
+      lineColor:'#8A8C90',
+      tertiaryColor:'#F6F5F1'
+    },
+    flowchart:{curve:'basis',useMaxWidth:true},
+    state:{useMaxWidth:true}
+  });
+</script>
+</body>
+</html>
