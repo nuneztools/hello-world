@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Guión de demo — Taller Spec Kit</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700;800&family=Hanken+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --red:#ED1C24;--red-deep:#C20E14;--red-tint:rgba(237,28,36,.07);
+    --ink:#23262B;--txt:#3C4149;--txt-dim:#6B7079;--txt-faint:#9AA0A8;
+    --page:#F2F1ED;--card:#FFFFFF;--panel:#FAF9F6;--line:#E4E2DC;
+    --green:#1E9E72;--amber:#BC850F;--purple:#7A5BC2;--teal:#2F8E9C;
+    --mono:'JetBrains Mono',ui-monospace,monospace;--sans:'Hanken Grotesk',system-ui,sans-serif;
+    --shadow:0 1px 2px rgba(35,38,43,.04),0 4px 18px rgba(35,38,43,.04);
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:var(--page);color:var(--txt);font-family:var(--sans);line-height:1.5;padding:40px 22px 70px;
+    background-image:radial-gradient(circle at 12% 0%, rgba(237,28,36,.06), transparent 42%)}
+  .wrap{max-width:1000px;margin:0 auto}
+  header{border:1px solid var(--line);border-radius:14px;background:var(--card);padding:26px 30px;position:relative;overflow:hidden;box-shadow:var(--shadow)}
+  header::before{content:"";position:absolute;left:0;top:0;bottom:0;width:5px;background:var(--red)}
+  .kicker{font-family:var(--mono);font-size:11px;letter-spacing:.2em;text-transform:uppercase;color:var(--red);font-weight:700}
+  h1{font-family:var(--mono);font-weight:800;font-size:clamp(22px,3.4vw,30px);margin:10px 0 4px;color:var(--ink)}
+  .sub{color:var(--txt-dim);font-size:14px}
+  .sect{font-family:var(--mono);font-size:12px;letter-spacing:.16em;text-transform:uppercase;color:var(--txt-faint);font-weight:700;margin:34px 0 14px;display:flex;align-items:center;gap:12px}
+  .sect .n{color:var(--red)} .sect::after{content:"";height:1px;flex:1;background:var(--line)}
+  code{font-family:var(--mono);font-size:.92em;color:var(--red-deep);background:var(--red-tint);padding:1px 5px;border-radius:4px}
+
+  .check{border:1px solid var(--line);border-radius:12px;background:var(--card);padding:18px 22px;box-shadow:var(--shadow)}
+  .check ul{list-style:none;display:flex;flex-direction:column;gap:9px}
+  .check li{font-size:13.5px;color:var(--txt);padding-left:26px;position:relative}
+  .check li::before{content:"☐";position:absolute;left:0;color:var(--red);font-size:15px;top:-1px}
+  .check li b{color:var(--ink)}
+
+  .ros{display:flex;flex-direction:column;gap:10px}
+  .blk{border:1px solid var(--line);border-radius:12px;background:var(--card);box-shadow:var(--shadow);overflow:hidden;display:grid;grid-template-columns:96px 1fr}
+  .blk .time{background:var(--ink);color:#fff;font-family:var(--mono);font-weight:700;font-size:13px;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:14px 6px;text-align:center;gap:3px}
+  .blk .time span{font-size:10px;color:var(--txt-faint);font-weight:400}
+  .blk.demo .time{background:var(--red)}
+  .blk .body{padding:14px 18px}
+  .blk h3{font-family:var(--mono);font-size:14px;color:var(--ink);font-weight:700;margin-bottom:6px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+  .pill{font-family:var(--mono);font-size:9.5px;letter-spacing:.08em;text-transform:uppercase;font-weight:700;padding:2px 7px;border-radius:5px;border:1px solid}
+  .pill.slide{color:var(--purple);border-color:rgba(122,91,194,.4);background:rgba(122,91,194,.07)}
+  .pill.live{color:var(--red);border-color:rgba(237,28,36,.4);background:var(--red-tint)}
+  .pill.poll{color:var(--teal);border-color:rgba(47,142,156,.4);background:rgba(47,142,156,.07)}
+  .blk .say{font-size:13px;color:var(--txt);margin-bottom:5px}
+  .blk .say b{color:var(--ink)}
+  .blk .do{font-size:12.5px;color:var(--txt-dim);padding-left:14px;position:relative}
+  .blk .do::before{content:"▸";position:absolute;left:0;color:var(--red)}
+  .aha{margin-top:7px;font-size:12px;color:var(--teal);font-family:var(--mono)}
+
+  .demobox{border:1px solid var(--line);border-left:3px solid var(--red);border-radius:10px;background:var(--card);padding:16px 20px;box-shadow:var(--shadow);margin-bottom:12px}
+  .demobox h4{font-family:var(--mono);font-size:13px;color:var(--ink);font-weight:700;margin-bottom:8px}
+  .demobox ol{margin:0 0 0 18px;display:flex;flex-direction:column;gap:5px}
+  .demobox li{font-size:13px;color:var(--txt)}
+  .demobox .pb{margin-top:10px;font-size:12.5px;color:var(--red-deep);background:var(--red-tint);border-radius:7px;padding:8px 11px}
+  .demobox .pb b{color:var(--red-deep)}
+
+  .rules{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  .rule{border:1px solid var(--line);border-left:3px solid var(--amber);border-radius:10px;background:var(--card);padding:13px 16px;box-shadow:var(--shadow)}
+  .rule b{color:var(--ink);font-family:var(--mono);font-size:12px}
+  .rule p{font-size:12.5px;color:var(--txt-dim);margin-top:3px}
+  footer{margin-top:36px;padding-top:16px;border-top:1px solid var(--line);font-family:var(--mono);font-size:11px;color:var(--txt-faint);display:flex;justify-content:space-between;flex-wrap:wrap;gap:6px}
+  @media(max-width:640px){.blk{grid-template-columns:72px 1fr}.rules{grid-template-columns:1fr}}
+  @media print{body{background:#fff;padding:0}*{box-shadow:none!important}.blk,.check,.demobox,.rule,header{border-color:#bbb}.blk .time,.blk.demo .time{background:#333!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="kicker">CCA · Workshop — Guión del presentador</div>
+    <h1>Demo Spec Kit + Copilot · Run-of-show</h1>
+    <p class="sub">30-45 min · estructura PAS · 2 demos en vivo + respaldo grabado · 5 momentos AhaSlides. Esta hoja es para vos, no para proyectar.</p>
+  </header>
+
+  <div class="sect"><span class="n">A</span> Pre-flight — antes de empezar (10 min antes)</div>
+  <div class="check">
+    <ul>
+      <li><b>Dos IntelliJ abiertos:</b> (1) repo CON Spec Kit en la rama del feature; (2) clon del MISMO branch en otro path, SIN los archivos de Spec Kit (borrá <code>.specify</code>, <code>.github/prompts</code>, <code>copilot-instructions.md</code>, <code>AGENTS.md</code>).</li>
+      <li><b>Modelo fijado en Sonnet 4.6</b> en ambos (demo barata y rápida). Opus solo si querés mostrar razonamiento.</li>
+      <li><b>Videos de respaldo listos</b> y ubicables en 5 segundos: (1) flujo completo specify→implement acelerado; (2) el cambio incremental con Spec Kit.</li>
+      <li><b>AhaSlides</b> abierto en otra pestaña, 5 preguntas pre-cargadas, QR/código a la vista.</li>
+      <li><b>Licencia IntelliJ renovada</b> (el "Grace: X days" no te puede cortar a mitad de demo).</li>
+      <li><b>Compañero briefeado:</b> sabe qué prompt va a tipear y que el punto es mostrar a Copilot improvisando — no ponerlo a él en aprietos.</li>
+      <li><b>Nada sensible en pantalla</b> (datos de tarjeta, hostnames, secrets) si grabás o proyectás afuera.</li>
+    </ul>
+  </div>
+
+  <div class="sect"><span class="n">B</span> Run-of-show</div>
+  <div class="ros">
+
+    <div class="blk"><div class="time">0:00<span>4 min</span></div><div class="body">
+      <h3><span class="pill slide">Slide 1</span> El gancho — la rueda <span class="pill poll">AhaSlides</span></h3>
+      <div class="say"><b>Decí:</b> arrancá con la anécdota de la rueda usada como mesa. "Hoy tenemos la rueda más poderosa para programar. La pregunta no es la herramienta — es el método."</div>
+      <div class="do">No menciones Spec Kit todavía. Solo instalá la idea: herramienta poderosa + sin método = potencial desperdiciado.</div>
+      <div class="aha">▸ Poll de apertura: "¿Usás un asistente de IA para programar hoy?" (A diario / A veces / No) — lee la sala.</div>
+    </div></div>
+
+    <div class="blk"><div class="time">0:04<span>5 min</span></div><div class="body">
+      <h3><span class="pill slide">Slide 2</span> El método: Segundo Cerebro <span class="pill poll">AhaSlides</span></h3>
+      <div class="say"><b>Decí:</b> conectá tu Runbook personal (C.O.D.E para Outlook/OneNote) con la idea grande: "el mismo método que organiza MI conocimiento, organiza el de la IA. Eso es <code>AGENTS.md</code> + <code>constitution.md</code> + <code>docs/context</code>."</div>
+      <div class="do">Este es el puente conceptual de toda la charla. No lo apures.</div>
+      <div class="aha">▸ Nube de palabras: "¿Qué herramienta poderosa usás SIN un método claro?" — los hace sentir el problema en carne propia.</div>
+    </div></div>
+
+    <div class="blk demo"><div class="time">0:09<span>8 min</span></div><div class="body">
+      <h3><span class="pill slide">Slide 3</span> Agitar + <span class="pill live">DEMO EN VIVO</span> <span class="pill poll">AhaSlides</span></h3>
+      <div class="say"><b>Decí:</b> "Veamos qué hace Copilot sin lineamientos." Pasá al IntelliJ SIN Spec Kit. Invitá al compañero.</div>
+      <div class="do">Demo 1 abajo (detalle). Time-box 2-3 min. Si se cuelga → video de respaldo.</div>
+      <div class="aha">▸ Tras el demo: poll "¿Aprobarías este código para producción bancaria?" (Sí / No / Necesita trabajo).</div>
+    </div></div>
+
+    <div class="blk demo"><div class="time">0:17<span>15 min</span></div><div class="body">
+      <h3><span class="pill slide">Slide 4</span> La solución + <span class="pill live">DEMO EN VIVO</span> <span class="pill poll">AhaSlides</span></h3>
+      <div class="say"><b>Decí:</b> presentá el flujo specify→plan→tasks→implement y la constitution como arnés. "Decidimos QUÉ y CÓMO antes de escribir una línea."</div>
+      <div class="do">Demo 2 abajo (detalle). El cambio incremental en el repo CON Spec Kit.</div>
+      <div class="aha">▸ ANTES de ejecutar: poll de predicción "¿el agente va a respetar la regla de no loguear PAN?" → ejecutás → revelás que SÍ. <b>Este es el momento 'wow'.</b></div>
+    </div></div>
+
+    <div class="blk"><div class="time">0:32<span>3 min</span></div><div class="body">
+      <h3><span class="pill slide">Slide 5</span> Harness Engineering — el marco</h3>
+      <div class="say"><b>Decí:</b> elevá el mensaje: "lo que construimos no es solo un workflow — es un <code>Harness</code> (arnés) alrededor de la IA: la enmarcamos, le damos contexto y validamos su trabajo."</div>
+      <div class="do">Recorré los 4 componentes mapeados a tu setup real: entorno (IntelliJ+Copilot), reglas (constitution), herramientas conectadas, bucles de feedback. Remarcá: "Spec Kit es una pieza del arnés".</div>
+    </div></div>
+
+    <div class="blk"><div class="time">0:35<span>4 min</span></div><div class="body">
+      <h3><span class="pill slide">Slide 6</span> Gobernanza — no es vibe coding</h3>
+      <div class="say"><b>Decí:</b> es el slide para el Manager y compliance. "Esto es auditable, reproducible, con arnés: constitution PCI, reglas de código, contexto curado, consumo controlado."</div>
+      <div class="do">Acá referenciás los recursos del taller (cheatsheet de modelos, dónde-vive-cada-cosa) como anexos.</div>
+    </div></div>
+
+    <div class="blk"><div class="time">0:39<span>5-7 min</span></div><div class="body">
+      <h3><span class="pill slide">Slide 7</span> Escalar + cierre + Q&amp;A <span class="pill poll">AhaSlides</span></h3>
+      <div class="say"><b>Decí:</b> "Esto que vieron lo replicamos en los 4 entornos y otros repos brownfield. Ya tenemos la rueda — hoy les mostré el método."</div>
+      <div class="aha">▸ Poll de cierre (escala 1-5): "¿Qué tan listo te sentís para adoptar este workflow?" — buy-in visible para el Manager. Dejá Q&amp;A abierto.</div>
+    </div></div>
+
+  </div>
+
+  <div class="sect"><span class="n">C</span> Los dos demos en vivo</div>
+
+  <div class="demobox">
+    <h4>🔴 Demo 1 — Copilot SIN método (el "agitar"), 2-3 min</h4>
+    <ol>
+      <li>IntelliJ del clon SIN Spec Kit. Abrí una clase del feature de Redis.</li>
+      <li>El compañero tipea un prompt suelto, ej: <code>"agregale manejo de errores y logging a este método"</code>.</li>
+      <li>Mostrá el resultado: probablemente deja un catch genérico, loguea de más, no sigue las convenciones. Señalalo sin dramatizar.</li>
+      <li>Cerrá: "no está mal Copilot — está mal que no le dijimos cómo. Ahora veamos con método."</li>
+    </ol>
+    <div class="pb"><b>Plan B:</b> si se cuelga o el output sale "demasiado bueno" por casualidad, cortá y poné el video de respaldo: "esto a veces sale distinto cada vez — justamente ese es el punto: no es reproducible".</div>
+  </div>
+
+  <div class="demobox" style="border-left-color:var(--green)">
+    <h4>🟢 Demo 2 — el cambio incremental CON Spec Kit, ~8-10 min</h4>
+    <ol>
+      <li>IntelliJ del repo CON Spec Kit, rama del feature.</li>
+      <li>Lanzá el poll de predicción <b>antes</b> de ejecutar (no loguear PAN).</li>
+      <li>Corré un cambio chico y acotado con <code>/speckit.specify</code> → <code>/speckit.plan</code> → <code>/speckit.tasks</code> → <code>/speckit.implement</code>. Algo de bajo riesgo sobre el feature ya hecho.</li>
+      <li>Mientras corre, narrá: "miren cómo lee la constitution, respeta las capas, no toca lo generado".</li>
+      <li>Revelá el resultado contra la predicción del poll: el agente respetó la regla PCI. Conectá con el slide de gobernanza.</li>
+    </ol>
+    <div class="pb" style="background:rgba(30,158,114,.08);color:#157a57"><b>Plan B:</b> el flujo completo es lento y arriesgado en vivo. Si vas corto de tiempo o algo se traba, mostrá el video acelerado del flujo completo y hacé EN VIVO solo el <code>/speckit.implement</code> final (la parte corta y de mayor impacto).</div>
+  </div>
+
+  <div class="sect"><span class="n">D</span> Reglas de oro del día</div>
+  <div class="rules">
+    <div class="rule"><b>NO hagas las 6 sub-fases</b><p>Una sub-fase bien mostrada &gt; seis a las corridas. El Manager necesita ver control, no volumen.</p></div>
+    <div class="rule"><b>Lo largo va grabado</b><p>Nunca ejecutes la parte lenta/riesgosa en vivo frente al Manager. Grabá, acelerá, ejecutá solo lo corto.</p></div>
+    <div class="rule"><b>Cuidá al compañero</b><p>El demo "sin método" muestra a Copilot improvisando, no a tu colega fallando. Enmárcalo así en voz alta.</p></div>
+    <div class="rule"><b>Si se cuelga, naturalidad</b><p>"Esto a veces toma un minuto — mientras, les muestro la corrida que ya tengo grabada." Sin disculpas, seguí.</p></div>
+    <div class="rule"><b>Proyectá los recursos HTML</b><p>El cheatsheet de modelos y el de contexto son tus anexos. No los rehagas en PPT — linkealos.</p></div>
+    <div class="rule"><b>Cerrá con el método, no la herramienta</b><p>El mensaje que se llevan: "la rueda ya la teníamos; lo nuevo es el método". Eso es lo que vende.</p></div>
+  </div>
+
+  <footer>
+    <div>Taller CCA · Spec Kit + Copilot</div>
+    <div>Guión del presentador · v1 · 29-may-2026</div>
+  </footer>
+</div>
+</body>
+</html>

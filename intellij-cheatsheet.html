@@ -1,0 +1,570 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>IntelliJ IDEA · Cheatsheet — Java & Microservicios</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,800&family=Hanken+Grotesk:wght@400;500;600&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0c0d11;
+    --bg-2:#111319;
+    --panel:#15171f;
+    --panel-2:#1a1d27;
+    --ink:#e9e6df;
+    --ink-dim:#9b9a93;
+    --ink-faint:#6a6a64;
+    --line:#262a36;
+    --amber:#ffb02e;
+    --amber-soft:#f5c97b;
+    --magenta:#ff5d8f;
+    --cyan:#56d4c4;
+    --green:#7ed492;
+    --mono:'JetBrains Mono',ui-monospace,monospace;
+    --display:'Bricolage Grotesque',sans-serif;
+    --body:'Hanken Grotesk',sans-serif;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-behavior:smooth;scroll-padding-top:90px}
+  body{
+    background:var(--bg);
+    color:var(--ink);
+    font-family:var(--body);
+    line-height:1.55;
+    -webkit-font-smoothing:antialiased;
+    background-image:
+      linear-gradient(rgba(255,255,255,.018) 1px,transparent 1px),
+      linear-gradient(90deg,rgba(255,255,255,.018) 1px,transparent 1px);
+    background-size:44px 44px;
+    overflow-x:hidden;
+  }
+  body::before{
+    content:"";position:fixed;inset:0;pointer-events:none;z-index:0;
+    background:radial-gradient(900px 500px at 80% -10%,rgba(255,176,46,.10),transparent 60%),
+               radial-gradient(700px 500px at -10% 20%,rgba(255,93,143,.08),transparent 55%);
+  }
+  .wrap{max-width:1180px;margin:0 auto;padding:0 24px;position:relative;z-index:1}
+
+  /* ---------- NAV ---------- */
+  nav{
+    position:sticky;top:0;z-index:50;
+    background:rgba(12,13,17,.82);
+    backdrop-filter:blur(12px);
+    border-bottom:1px solid var(--line);
+  }
+  nav .wrap{display:flex;align-items:center;gap:8px;height:64px;flex-wrap:wrap}
+  .brand{font-family:var(--mono);font-weight:700;font-size:14px;letter-spacing:-.3px;color:var(--ink);margin-right:auto;display:flex;align-items:center;gap:10px}
+  .brand .dot{width:10px;height:10px;border-radius:2px;background:linear-gradient(135deg,var(--amber),var(--magenta))}
+  nav a{
+    font-family:var(--mono);font-size:12.5px;text-decoration:none;color:var(--ink-dim);
+    padding:7px 11px;border-radius:7px;transition:.18s;white-space:nowrap;
+  }
+  nav a:hover{color:var(--ink);background:var(--panel-2)}
+
+  /* ---------- HERO ---------- */
+  header{padding:74px 0 44px}
+  .eyebrow{font-family:var(--mono);font-size:12px;letter-spacing:2px;text-transform:uppercase;color:var(--amber);margin-bottom:18px}
+  h1{font-family:var(--display);font-weight:800;font-size:clamp(40px,6.5vw,76px);line-height:.98;letter-spacing:-2px}
+  h1 .accent{
+    background:linear-gradient(115deg,var(--amber) 20%,var(--magenta) 90%);
+    -webkit-background-clip:text;background-clip:text;color:transparent;
+  }
+  .lead{max-width:620px;color:var(--ink-dim);font-size:17px;margin-top:22px}
+  .meta-row{display:flex;gap:10px;flex-wrap:wrap;margin-top:28px;font-family:var(--mono);font-size:12px}
+  .chip{border:1px solid var(--line);background:var(--panel);padding:6px 12px;border-radius:999px;color:var(--ink-dim)}
+  .chip b{color:var(--amber);font-weight:500}
+
+  /* ---------- SECTION ---------- */
+  section{padding:46px 0;border-top:1px solid var(--line)}
+  .sec-head{display:flex;align-items:baseline;gap:16px;margin-bottom:30px;flex-wrap:wrap}
+  .sec-num{font-family:var(--mono);font-size:13px;color:var(--ink-faint);border:1px solid var(--line);border-radius:7px;padding:4px 9px}
+  h2{font-family:var(--display);font-weight:700;font-size:clamp(26px,3.6vw,38px);letter-spacing:-1px}
+  .sec-desc{color:var(--ink-dim);font-size:15px;max-width:560px;margin-top:4px;flex-basis:100%}
+
+  /* ---------- KEYCAPS ---------- */
+  kbd{
+    display:inline-block;font-family:var(--mono);font-size:12px;font-weight:500;
+    color:var(--ink);background:linear-gradient(180deg,#272b37,#1b1e28);
+    border:1px solid #313644;border-bottom:2px solid #0b0c10;
+    border-radius:6px;padding:3px 7px;min-width:24px;text-align:center;
+    box-shadow:0 1px 0 rgba(255,255,255,.04) inset;
+    line-height:1.3;
+  }
+  .combo{display:inline-flex;align-items:center;gap:4px;flex-wrap:wrap}
+  .combo .plus{color:var(--ink-faint);font-family:var(--mono);font-size:11px}
+
+  /* ---------- HOTKEY TABLE ---------- */
+  .hk-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:18px}
+  .hk-card{background:var(--panel);border:1px solid var(--line);border-radius:14px;overflow:hidden}
+  .hk-card h3{
+    font-family:var(--mono);font-size:13px;font-weight:700;letter-spacing:.3px;
+    padding:14px 18px;color:var(--bg);
+    background:linear-gradient(100deg,var(--amber),var(--amber-soft));
+    display:flex;align-items:center;gap:8px;
+  }
+  .hk-card.alt h3{background:linear-gradient(100deg,var(--magenta),#ff8fb0)}
+  .hk-card.alt2 h3{background:linear-gradient(100deg,var(--cyan),#9fe9de)}
+  .hk-card.alt3 h3{background:linear-gradient(100deg,var(--green),#bde9c7)}
+  .hk-row{display:grid;grid-template-columns:1fr auto;gap:12px;align-items:center;padding:9px 18px;border-top:1px solid var(--line)}
+  .hk-row:nth-child(2){border-top:none}
+  .hk-row .label{font-size:13.5px;color:var(--ink)}
+  .hk-row .label small{display:block;color:var(--ink-faint);font-size:11px;font-family:var(--mono)}
+  .hk-keys{display:flex;flex-direction:column;gap:4px;align-items:flex-end}
+  .os-tag{font-family:var(--mono);font-size:9px;color:var(--ink-faint);margin-right:4px;width:30px;display:inline-block;text-align:right}
+
+  /* ---------- CODE / TEMPLATES ---------- */
+  .tpl-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:18px;margin-top:6px}
+  .codeblock{background:#0a0b0e;border:1px solid var(--line);border-radius:12px;overflow:hidden}
+  .codeblock .bar{display:flex;gap:6px;padding:11px 14px;border-bottom:1px solid var(--line);align-items:center}
+  .codeblock .bar i{width:11px;height:11px;border-radius:50%;display:block}
+  .codeblock .bar .t{font-family:var(--mono);font-size:11px;color:var(--ink-faint);margin-left:8px}
+  .codeblock pre{padding:16px;font-family:var(--mono);font-size:12.5px;line-height:1.7;overflow-x:auto;color:var(--ink)}
+  .c-key{color:var(--amber)}.c-cmt{color:var(--ink-faint);font-style:italic}.c-str{color:var(--green)}.c-fn{color:var(--magenta)}.c-kw{color:var(--cyan)}
+
+  /* ---------- PLUGIN CARDS ---------- */
+  .plug-cat{font-family:var(--mono);font-size:12px;letter-spacing:1.5px;text-transform:uppercase;color:var(--amber);margin:34px 0 14px;display:flex;align-items:center;gap:12px}
+  .plug-cat::after{content:"";flex:1;height:1px;background:var(--line)}
+  .plug-cat:first-of-type{margin-top:0}
+  .plug-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:16px}
+  .plug{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:18px 20px;transition:.2s;position:relative}
+  .plug:hover{border-color:#3a4150;transform:translateY(-2px);background:var(--panel-2)}
+  .plug .top{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;margin-bottom:8px}
+  .plug h4{font-family:var(--display);font-size:18px;font-weight:600;letter-spacing:-.3px}
+  .plug p{font-size:13.5px;color:var(--ink-dim)}
+  .plug .why{font-size:12.5px;color:var(--amber-soft);margin-top:9px;font-family:var(--mono);line-height:1.5}
+  .badge{font-family:var(--mono);font-size:9.5px;font-weight:700;letter-spacing:.5px;padding:3px 8px;border-radius:6px;text-transform:uppercase;white-space:nowrap}
+  .b-free{background:rgba(126,212,146,.14);color:var(--green);border:1px solid rgba(126,212,146,.3)}
+  .b-paid{background:rgba(255,93,143,.13);color:var(--magenta);border:1px solid rgba(255,93,143,.3)}
+  .b-bundle{background:rgba(86,212,196,.13);color:var(--cyan);border:1px solid rgba(86,212,196,.3)}
+  .b-ult{background:rgba(255,176,46,.13);color:var(--amber);border:1px solid rgba(255,176,46,.3)}
+
+  /* ---------- EDITIONS ---------- */
+  .alert{background:linear-gradient(120deg,rgba(255,176,46,.08),rgba(255,93,143,.06));border:1px solid rgba(255,176,46,.22);border-radius:14px;padding:20px 22px;margin-bottom:28px}
+  .alert .tag{font-family:var(--mono);font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--amber);margin-bottom:8px}
+  .alert p{font-size:14.5px;color:var(--ink);max-width:760px}
+  .ed-grid{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+  .ed{border-radius:16px;padding:24px;border:1px solid var(--line)}
+  .ed.free{background:var(--panel)}
+  .ed.ult{background:linear-gradient(165deg,rgba(255,176,46,.07),var(--panel) 60%);border-color:rgba(255,176,46,.3)}
+  .ed .ed-title{font-family:var(--display);font-size:22px;font-weight:700;margin-bottom:3px}
+  .ed .ed-sub{font-family:var(--mono);font-size:11.5px;color:var(--ink-faint);margin-bottom:18px}
+  .ed ul{list-style:none}
+  .ed li{font-size:13.5px;padding:7px 0 7px 26px;position:relative;border-top:1px solid var(--line);color:var(--ink-dim)}
+  .ed li:first-child{border-top:none}
+  .ed li b{color:var(--ink);font-weight:600}
+  .ed.free li::before{content:"✓";position:absolute;left:0;color:var(--green);font-weight:700}
+  .ed.ult li::before{content:"★";position:absolute;left:0;color:var(--amber)}
+
+  .leverage{margin-top:30px}
+  .lev-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:16px;margin-top:14px}
+  .lev{background:var(--panel);border:1px solid var(--line);border-left:3px solid var(--amber);border-radius:0 12px 12px 0;padding:16px 18px}
+  .lev h5{font-family:var(--mono);font-size:13px;color:var(--amber);margin-bottom:6px;font-weight:700}
+  .lev p{font-size:13px;color:var(--ink-dim)}
+
+  /* ---------- TIPS ---------- */
+  .tip-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+  .tip{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:20px}
+  .tip .ic{font-family:var(--mono);font-size:12px;font-weight:700;color:var(--bg);background:var(--amber);width:28px;height:28px;border-radius:8px;display:flex;align-items:center;justify-content:center;margin-bottom:12px}
+  .tip:nth-child(3n+2) .ic{background:var(--magenta)}
+  .tip:nth-child(3n) .ic{background:var(--cyan)}
+  .tip h4{font-family:var(--display);font-size:17px;font-weight:600;margin-bottom:7px;letter-spacing:-.2px}
+  .tip p{font-size:13px;color:var(--ink-dim)}
+  .tip p .k{font-family:var(--mono);font-size:11.5px;color:var(--amber-soft)}
+
+  /* ---------- WORKFLOW ---------- */
+  .flow{background:linear-gradient(160deg,var(--panel-2),var(--panel));border:1px solid var(--line);border-radius:18px;padding:30px;margin-top:34px}
+  .flow .flow-title{font-family:var(--display);font-size:22px;font-weight:700;margin-bottom:6px}
+  .flow .flow-sub{color:var(--ink-dim);font-size:14px;margin-bottom:24px;max-width:640px}
+  .steps{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;counter-reset:s}
+  .step{position:relative;background:var(--bg-2);border:1px solid var(--line);border-radius:12px;padding:16px 14px}
+  .step::before{counter-increment:s;content:"0" counter(s);font-family:var(--mono);font-size:11px;color:var(--amber);display:block;margin-bottom:8px}
+  .step h5{font-family:var(--mono);font-size:12.5px;color:var(--ink);margin-bottom:6px}
+  .step p{font-size:11.5px;color:var(--ink-faint);line-height:1.5}
+  .step p .k{color:var(--amber-soft)}
+
+  .method{margin-top:24px;display:grid;grid-template-columns:1fr 1fr;gap:18px}
+  .method-card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:22px}
+  .method-card h4{font-family:var(--display);font-size:18px;font-weight:600;margin-bottom:10px;display:flex;align-items:center;gap:9px}
+  .method-card h4 span{font-family:var(--mono);font-size:11px;background:var(--amber);color:var(--bg);padding:3px 7px;border-radius:6px;font-weight:700}
+  .method-card ol{margin-left:18px;font-size:13.5px;color:var(--ink-dim);display:grid;gap:8px}
+  .method-card ol li b{color:var(--ink)}
+  .method-card .k{font-family:var(--mono);font-size:11.5px;color:var(--amber-soft)}
+
+  /* ---------- FOOTER ---------- */
+  footer{border-top:1px solid var(--line);padding:34px 0 60px;color:var(--ink-faint);font-size:12.5px}
+  footer .wrap{display:flex;justify-content:space-between;gap:20px;flex-wrap:wrap;align-items:center}
+  footer .mono{font-family:var(--mono)}
+
+  /* ---------- RESPONSIVE ---------- */
+  @media(max-width:880px){
+    .hk-grid,.tpl-grid,.plug-grid,.ed-grid,.lev-grid,.method{grid-template-columns:1fr}
+    .tip-grid{grid-template-columns:1fr}
+    .steps{grid-template-columns:1fr 1fr}
+    nav .brand{margin-right:0;flex-basis:100%;margin-bottom:6px}
+    nav .wrap{height:auto;padding-top:10px;padding-bottom:10px}
+  }
+  @media print{
+    body{background:#fff;color:#000;background-image:none}
+    nav{display:none}body::before{display:none}
+    .plug,.hk-card,.tip,.ed,.lev,.step,.flow,.method-card{break-inside:avoid}
+  }
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="wrap">
+    <div class="brand"><span class="dot"></span>IntelliJ IDEA · Cheatsheet</div>
+    <a href="#hotkeys">01 Hotkeys</a>
+    <a href="#plugins">02 Plugins</a>
+    <a href="#ediciones">03 Free vs Ultimate</a>
+    <a href="#tips">04 Tips & Workflow</a>
+  </div>
+</nav>
+
+<header>
+  <div class="wrap">
+    <div class="eyebrow">Java · Microservicios · Sistemas distribuidos</div>
+    <h1>El cheatsheet de <span class="accent">IntelliJ</span><br>para quien vive en el IDE.</h1>
+    <p class="lead">Hotkeys que de verdad usás todos los días, plugins que aportan valor real en microservicios, el nuevo modelo de licencia 2025.3, y un método para que todo esto se te quede en los dedos.</p>
+    <div class="meta-row">
+      <span class="chip"><b>Keymap:</b> Windows / macOS</span>
+      <span class="chip"><b>Foco:</b> Java + Spring Boot</span>
+      <span class="chip"><b>Actualizado:</b> modelo unificado 2025.3+</span>
+    </div>
+  </div>
+</header>
+
+<!-- ====================== 01 HOTKEYS ====================== -->
+<section id="hotkeys">
+  <div class="wrap">
+    <div class="sec-head">
+      <span class="sec-num">01</span>
+      <div>
+        <h2>Hotkeys que importan</h2>
+      </div>
+      <p class="sec-desc">La columna de la izquierda es el atajo en Windows/Linux; la de la derecha, en macOS. Si te aprendés solo una cosa de toda esta hoja, que sea <kbd>⇧</kbd> <kbd>⇧</kbd> (Shift dos veces) → <em>Search Everywhere</em>.</p>
+    </div>
+
+    <div class="hk-grid">
+
+      <!-- Navegación -->
+      <div class="hk-card">
+        <h3>◆ Navegación</h3>
+        <div class="hk-row"><div class="label">Ir a una línea</div><div class="hk-keys"><span class="combo"><span class="os-tag">Win</span><kbd>Ctrl</kbd><span class="plus">+</span><kbd>G</kbd></span><span class="combo"><span class="os-tag">Mac</span><kbd>⌘</kbd><span class="plus">+</span><kbd>L</kbd></span></div></div>
+        <div class="hk-row"><div class="label">Buscar clase</div><div class="hk-keys"><span class="combo"><span class="os-tag">Win</span><kbd>Ctrl</kbd><span class="plus">+</span><kbd>N</kbd></span><span class="combo"><span class="os-tag">Mac</span><kbd>⌘</kbd><span class="plus">+</span><kbd>O</kbd></span></div></div>
+        <div class="hk-row"><div class="label">Buscar archivo</div><div class="hk-keys"><span class="combo"><span class="os-tag">Win</span><kbd>Ctrl</kbd><span class="plus">+</span><kbd>⇧</kbd><span class="plus">+</span><kbd>N</kbd></span><span class="combo"><span class="os-tag">Mac</span><kbd>⌘</kbd><span class="plus">+</span><kbd>⇧</kbd><span class="plus">+</span><kbd>O</kbd></span></div></div>
+        <div class="hk-row"><div class="label">Search Everywhere <small>todo en uno</small></div><div class="hk-keys"><span class="combo"><kbd>⇧</kbd><span class="plus">+</span><kbd>⇧</kbd></span></div></div>
+        <div class="hk-row"><div class="label">Ir a declaración / fuente</div><div class="hk-keys"><span class="combo"><span class="os-tag">Win</span><kbd>Ctrl</kbd><span class="plus">+</span><kbd>B</kbd></span><span class="combo"><span class="os-tag">Mac</span><kbd>⌘</kbd><span class="plus">+</span><kbd>B</kbd></span></div></div>
+        <div class="hk-row"><div class="label">Ir a implementación</div><div class="hk-keys"><span class="combo"><span class="os-tag">Win</span><kbd>Ctrl</kbd><span class="plus">+</span><kbd>Alt</kbd><span class="plus">+</span><kbd>B</kbd></span><span class="combo"><span class="os-tag">Mac</span><kbd>⌘</kbd><span class="plus">+</span><kbd>⌥</kbd><span class="plus">+</span><kbd>B</kbd></span></div></div>
+        <div class="hk-row"><div class="label">Archivos recientes</div><div class="hk-keys"><span class="combo"><span class="os-tag">Win</span><kbd>Ctrl</kbd><span class="plus">+</span><kbd>E</kbd></span><span class="combo"><span class="os-tag">Mac</span><kbd>⌘</kbd><span class="plus">+</span><kbd>E</kbd></span></div></div>
+        <div class="hk-row"><div class="label">Volver / avanzar en el cursor</div><div class="hk-keys"><span class="combo"><span class="os-tag">Win</span><kbd>Ctrl</kbd><span class="plus">+</span><kbd>Alt</kbd><span class="plus">+</span><kbd>←</kbd>/<kbd>→</kbd></span><span class="combo"><span class="os-tag">Mac</span><kbd>⌘</kbd><span class="plus">+</span><kbd>⌥</kbd><span class="plus">+</span><kbd>←</kbd>/<kbd>→</kbd></span></div></div>
+        <div class="hk-row"><div class="label">Última edición</div><div class="hk-keys"><span class="combo"><span class="os-tag">Win</span><kbd>Ctrl</kbd><span class="plus">+</span><kbd>⇧</kbd><span class="plus">+</span><kbd>⌫</kbd></span><span class="combo"><span class="os-tag">Mac</span><kbd>⌘</kbd><span class="plus">+</span><kbd>⇧</kbd><span class="plus">+</span><kbd>⌫</kbd></span></div></div>
+        <div class="hk-row"><div class="label">Estructura del archivo</div><div class="hk-keys"><span class="combo"><span class="os-tag">Win</span><kbd>Ctrl</kbd><span class="plus">+</span><kbd>F12</kbd></span><span class="combo"><span class="os-tag">Mac</span><kbd>⌘</kbd><span class="plus">+</span><kbd>F12</kbd></span></div></div>
+        <div class="hk-row"><div class="label">Ir al test / crear test</div><div class="hk-keys"><span class="combo"><span class="os-tag">Win</span><kbd>Ctrl</kbd><span class="plus">+</span><kbd>⇧</kbd><span class="plus">+</span><kbd>T</kbd></span><span class="combo"><span class="os-tag">Mac</span><kbd>⌘</kbd><span class="plus">+</span><kbd>⇧</kbd><span class="plus">+</span><kbd>T</kbd></span></div></div>
+      </div>
+
+      <!-- Edición -->
+      <div class="hk-card alt">
+        <h3>◆ Edición</h3>
+        <div class="hk-row"><div class="label">Quick-fix / intentions <small>el atajo rey</small></div><div class="hk-keys"><span class="combo"><kbd>Alt</kbd><span class="plus">+</span><kbd>↵</kbd></span></div></div>
+        <div class="hk-row"><div class="label">Reformatear código</div><div class="hk-keys"><span class="combo"><span class="os-tag">Win</span><kbd>Ctrl</kbd><span class="plus">+</span><kbd>Alt</kbd><span class="plus">+</span><kbd>L</kbd></span><span class="combo"><span class="os-tag">Mac</span><kbd>⌘</kbd><span class="plus">+</span><kbd>⌥</kbd><span class="plus">+</span><kbd>L</kbd></span></div></div>
+        <div class="hk-row"><div class="label">Organizar imports</div><div class="hk-keys"><span class="combo"><span class="os-tag">Win</span><kbd>Ctrl</kbd><span class="plus">+</span><kbd>Alt</kbd><span class="plus">+</span><kbd>O</kbd></span><span class="combo"><span class="os-tag">Mac</span><kbd>Ctrl</kbd><span class="plus">+</span><kbd>⌥</kbd><span class="plus">+</span><kbd>O</kbd></span></div></div>
+        <div class="hk-row"><div class="label">Completar código</div><div class="hk-keys"><span class="combo"><span class="os-tag">Win</span><kbd>Ctrl</kbd><span class="plus">+</span><kbd>Space</kbd></span><span class="combo"><span class="os-tag">Mac</span><kbd>Ctrl</kbd><span class="plus">+</span><kbd>Space</kbd></span></div></div>
+        <div class="hk-row"><div class="label">Completar sentencia <small>cierra ; { }</small></div><div class="hk-keys"><span class="combo"><span class="os-tag">Win</span><kbd>Ctrl</kbd><span class="plus">+</span><kbd>⇧</kbd><span class="plus">+</span><kbd>↵</kbd></span><span class="combo"><span class="os-tag">Mac</span><kbd>⌘</kbd><span class="plus">+</span><kbd>⇧</kbd><span class="plus">+</span><kbd>↵</kbd></span></div></div>
+        <div class="hk-row"><div class="label">Generar (getters, ctor…)</div><div class="hk-keys"><span class="combo"><span class="os-tag">Win</span><kbd>Alt</kbd><span class="plus">+</span><kbd>Insert</kbd></span><span class="combo"><span class="os-tag">Mac</span><kbd>⌘</kbd><span class="plus">+</span><kbd>N</kbd></span></div></div>
+        <div class="hk-row"><div class="label">Duplicar línea</div><div class="hk-keys"><span class="combo"><span class="os-tag">Win</span><kbd>Ctrl</kbd><span class="plus">+</span><kbd>D</kbd></span><span class="combo"><span class="os-tag">Mac</span><kbd>⌘</kbd><span class="plus">+</span><kbd>D</kbd></span></div></div>
+        <div class="hk-row"><div class="label">Borrar línea</div><div class="hk-keys"><span class="combo"><span class="os-tag">Win</span><kbd>Ctrl</kbd><span class="plus">+</span><kbd>Y</kbd></span><span class="combo"><span class="os-tag">Mac</span><kbd>⌘</kbd><span class="plus">+</span><kbd>⌫</kbd></span></div></div>
+        <div class="hk-row"><div class="label">Mover línea ↑ / ↓</div><div class="hk-keys"><span class="combo"><span class="os-tag">Win</span><kbd>⇧</kbd><span class="plus">+</span><kbd>Alt</kbd><span class="plus">+</span><kbd>↑</kbd>/<kbd>↓</kbd></span><span class="combo"><span class="os-tag">Mac</span><kbd>⇧</kbd><span class="plus">+</span><kbd>⌥</kbd><span class="plus">+</span><kbd>↑</kbd>/<kbd>↓</kbd></span></div></div>
+        <div class="hk-row"><div class="label">Expandir / reducir selección</div><div class="hk-keys"><span class="combo"><span class="os-tag">Win</span><kbd>Ctrl</kbd><span class="plus">+</span><kbd>W</kbd></span><span class="combo"><span class="os-tag">Mac</span><kbd>⌥</kbd><span class="plus">+</span><kbd>↑</kbd></span></div></div>
+        <div class="hk-row"><div class="label">Comentar línea</div><div class="hk-keys"><span class="combo"><span class="os-tag">Win</span><kbd>Ctrl</kbd><span class="plus">+</span><kbd>/</kbd></span><span class="combo"><span class="os-tag">Mac</span><kbd>⌘</kbd><span class="plus">+</span><kbd>/</kbd></span></div></div>
+        <div class="hk-row"><div class="label">Multicursor (sgte. ocurrencia)</div><div class="hk-keys"><span class="combo"><span class="os-tag">Win</span><kbd>Alt</kbd><span class="plus">+</span><kbd>J</kbd></span><span class="combo"><span class="os-tag">Mac</span><kbd>Ctrl</kbd><span class="plus">+</span><kbd>G</kbd></span></div></div>
+      </div>
+
+      <!-- Refactor -->
+      <div class="hk-card alt2">
+        <h3>◆ Refactor</h3>
+        <div class="hk-row"><div class="label">Refactor this <small>menú contextual</small></div><div class="hk-keys"><span class="combo"><span class="os-tag">Win</span><kbd>Ctrl</kbd><span class="plus">+</span><kbd>Alt</kbd><span class="plus">+</span><kbd>⇧</kbd><span class="plus">+</span><kbd>T</kbd></span><span class="combo"><span class="os-tag">Mac</span><kbd>Ctrl</kbd><span class="plus">+</span><kbd>T</kbd></span></div></div>
+        <div class="hk-row"><div class="label">Renombrar (símbolo)</div><div class="hk-keys"><span class="combo"><kbd>⇧</kbd><span class="plus">+</span><kbd>F6</kbd></span></div></div>
+        <div class="hk-row"><div class="label">Extraer variable</div><div class="hk-keys"><span class="combo"><span class="os-tag">Win</span><kbd>Ctrl</kbd><span class="plus">+</span><kbd>Alt</kbd><span class="plus">+</span><kbd>V</kbd></span><span class="combo"><span class="os-tag">Mac</span><kbd>⌘</kbd><span class="plus">+</span><kbd>⌥</kbd><span class="plus">+</span><kbd>V</kbd></span></div></div>
+        <div class="hk-row"><div class="label">Extraer método</div><div class="hk-keys"><span class="combo"><span class="os-tag">Win</span><kbd>Ctrl</kbd><span class="plus">+</span><kbd>Alt</kbd><span class="plus">+</span><kbd>M</kbd></span><span class="combo"><span class="os-tag">Mac</span><kbd>⌘</kbd><span class="plus">+</span><kbd>⌥</kbd><span class="plus">+</span><kbd>M</kbd></span></div></div>
+        <div class="hk-row"><div class="label">Extraer constante / campo</div><div class="hk-keys"><span class="combo"><span class="os-tag">Win</span><kbd>Ctrl</kbd><span class="plus">+</span><kbd>Alt</kbd><span class="plus">+</span><kbd>C</kbd>/<kbd>F</kbd></span></div></div>
+        <div class="hk-row"><div class="label">Inline</div><div class="hk-keys"><span class="combo"><span class="os-tag">Win</span><kbd>Ctrl</kbd><span class="plus">+</span><kbd>Alt</kbd><span class="plus">+</span><kbd>N</kbd></span><span class="combo"><span class="os-tag">Mac</span><kbd>⌘</kbd><span class="plus">+</span><kbd>⌥</kbd><span class="plus">+</span><kbd>N</kbd></span></div></div>
+        <div class="hk-row"><div class="label">Buscar usos</div><div class="hk-keys"><span class="combo"><span class="os-tag">Win</span><kbd>Alt</kbd><span class="plus">+</span><kbd>F7</kbd></span><span class="combo"><span class="os-tag">Mac</span><kbd>⌥</kbd><span class="plus">+</span><kbd>F7</kbd></span></div></div>
+        <div class="hk-row"><div class="label">Surround with <small>try/if/for…</small></div><div class="hk-keys"><span class="combo"><span class="os-tag">Win</span><kbd>Ctrl</kbd><span class="plus">+</span><kbd>Alt</kbd><span class="plus">+</span><kbd>T</kbd></span><span class="combo"><span class="os-tag">Mac</span><kbd>⌘</kbd><span class="plus">+</span><kbd>⌥</kbd><span class="plus">+</span><kbd>T</kbd></span></div></div>
+        <div class="hk-row"><div class="label">Override / Implement</div><div class="hk-keys"><span class="combo"><span class="os-tag">Win</span><kbd>Ctrl</kbd><span class="plus">+</span><kbd>O</kbd> / <kbd>I</kbd></span></div></div>
+        <div class="hk-row"><div class="label">Jerarquía de tipos</div><div class="hk-keys"><span class="combo"><kbd>Ctrl</kbd><span class="plus">+</span><kbd>H</kbd></span></div></div>
+      </div>
+
+      <!-- Run / Debug / VCS -->
+      <div class="hk-card alt3">
+        <h3>◆ Run · Debug · Git</h3>
+        <div class="hk-row"><div class="label">Run</div><div class="hk-keys"><span class="combo"><span class="os-tag">Win</span><kbd>⇧</kbd><span class="plus">+</span><kbd>F10</kbd></span><span class="combo"><span class="os-tag">Mac</span><kbd>Ctrl</kbd><span class="plus">+</span><kbd>R</kbd></span></div></div>
+        <div class="hk-row"><div class="label">Debug</div><div class="hk-keys"><span class="combo"><span class="os-tag">Win</span><kbd>⇧</kbd><span class="plus">+</span><kbd>F9</kbd></span><span class="combo"><span class="os-tag">Mac</span><kbd>Ctrl</kbd><span class="plus">+</span><kbd>D</kbd></span></div></div>
+        <div class="hk-row"><div class="label">Run… (elegir config)</div><div class="hk-keys"><span class="combo"><span class="os-tag">Win</span><kbd>Alt</kbd><span class="plus">+</span><kbd>⇧</kbd><span class="plus">+</span><kbd>F10</kbd></span><span class="combo"><span class="os-tag">Mac</span><kbd>Ctrl</kbd><span class="plus">+</span><kbd>⌥</kbd><span class="plus">+</span><kbd>R</kbd></span></div></div>
+        <div class="hk-row"><div class="label">Toggle breakpoint</div><div class="hk-keys"><span class="combo"><span class="os-tag">Win</span><kbd>Ctrl</kbd><span class="plus">+</span><kbd>F8</kbd></span><span class="combo"><span class="os-tag">Mac</span><kbd>⌘</kbd><span class="plus">+</span><kbd>F8</kbd></span></div></div>
+        <div class="hk-row"><div class="label">Step over / into</div><div class="hk-keys"><span class="combo"><kbd>F8</kbd> / <kbd>F7</kbd></span></div></div>
+        <div class="hk-row"><div class="label">Resume</div><div class="hk-keys"><span class="combo"><kbd>F9</kbd></span></div></div>
+        <div class="hk-row"><div class="label">Evaluar expresión</div><div class="hk-keys"><span class="combo"><span class="os-tag">Win</span><kbd>Alt</kbd><span class="plus">+</span><kbd>F8</kbd></span><span class="combo"><span class="os-tag">Mac</span><kbd>⌥</kbd><span class="plus">+</span><kbd>F8</kbd></span></div></div>
+        <div class="hk-row"><div class="label">Commit</div><div class="hk-keys"><span class="combo"><span class="os-tag">Win</span><kbd>Ctrl</kbd><span class="plus">+</span><kbd>K</kbd></span><span class="combo"><span class="os-tag">Mac</span><kbd>⌘</kbd><span class="plus">+</span><kbd>K</kbd></span></div></div>
+        <div class="hk-row"><div class="label">Push</div><div class="hk-keys"><span class="combo"><span class="os-tag">Win</span><kbd>Ctrl</kbd><span class="plus">+</span><kbd>⇧</kbd><span class="plus">+</span><kbd>K</kbd></span><span class="combo"><span class="os-tag">Mac</span><kbd>⌘</kbd><span class="plus">+</span><kbd>⇧</kbd><span class="plus">+</span><kbd>K</kbd></span></div></div>
+        <div class="hk-row"><div class="label">Update / pull</div><div class="hk-keys"><span class="combo"><span class="os-tag">Win</span><kbd>Ctrl</kbd><span class="plus">+</span><kbd>T</kbd></span><span class="combo"><span class="os-tag">Mac</span><kbd>⌘</kbd><span class="plus">+</span><kbd>T</kbd></span></div></div>
+        <div class="hk-row"><div class="label">Find Action <small>cuando no sabés el atajo</small></div><div class="hk-keys"><span class="combo"><span class="os-tag">Win</span><kbd>Ctrl</kbd><span class="plus">+</span><kbd>⇧</kbd><span class="plus">+</span><kbd>A</kbd></span><span class="combo"><span class="os-tag">Mac</span><kbd>⌘</kbd><span class="plus">+</span><kbd>⇧</kbd><span class="plus">+</span><kbd>A</kbd></span></div></div>
+      </div>
+    </div>
+
+    <!-- Live templates + postfix -->
+    <div class="tpl-grid" style="margin-top:24px">
+      <div class="codeblock">
+        <div class="bar"><i style="background:#ff5f57"></i><i style="background:#febc2e"></i><i style="background:#28c840"></i><span class="t">live-templates.java — escribí el prefijo + Tab</span></div>
+        <pre><span class="c-key">psvm</span>  <span class="c-cmt">→ public static void main(String[])</span>
+<span class="c-key">sout</span>  <span class="c-cmt">→ System.out.println()</span>
+<span class="c-key">soutv</span> <span class="c-cmt">→ imprime la última variable</span>
+<span class="c-key">fori</span>  <span class="c-cmt">→ for (int i = 0; i &lt; ; i++)</span>
+<span class="c-key">iter</span>  <span class="c-cmt">→ for-each sobre la colección</span>
+<span class="c-key">ifn</span>   <span class="c-cmt">→ if (x == null)</span>
+<span class="c-key">inn</span>   <span class="c-cmt">→ if (x != null)</span>
+<span class="c-key">thr</span>   <span class="c-cmt">→ throw new ...</span>
+<span class="c-key">psf</span>   <span class="c-cmt">→ public static final</span></pre>
+      </div>
+      <div class="codeblock">
+        <div class="bar"><i style="background:#ff5f57"></i><i style="background:#febc2e"></i><i style="background:#28c840"></i><span class="t">postfix.java — escribí la expresión + .prefijo</span></div>
+        <pre>resultado<span class="c-fn">.var</span>     <span class="c-cmt">→ var x = resultado;</span>
+cliente<span class="c-fn">.nn</span>      <span class="c-cmt">→ if (cliente != null) {}</span>
+lista<span class="c-fn">.for</span>      <span class="c-cmt">→ for-each iteración</span>
+token<span class="c-fn">.sout</span>     <span class="c-cmt">→ System.out.println(token)</span>
+obj<span class="c-fn">.cast</span>       <span class="c-cmt">→ ((Tipo) obj)</span>
+valor<span class="c-fn">.return</span>  <span class="c-cmt">→ return valor;</span>
+respuesta<span class="c-fn">.try</span>  <span class="c-cmt">→ try { respuesta } catch</span>
+stream<span class="c-fn">.stream</span>  <span class="c-cmt">→ envuelve en .stream()</span>
+flag<span class="c-fn">.not</span>       <span class="c-cmt">→ niega la expresión</span></pre>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ====================== 02 PLUGINS ====================== -->
+<section id="plugins">
+  <div class="wrap">
+    <div class="sec-head">
+      <span class="sec-num">02</span>
+      <div><h2>Plugins con valor real</h2></div>
+      <p class="sec-desc">Curados para microservicios y sistemas distribuidos: Spring, Redis, testing de carga, profiling y observabilidad. La regla: cada plugin que instalés tiene que ganarse su lugar. Tool fatigue es real — agregá de a uno y medí si te hace más rápido.</p>
+    </div>
+
+    <div class="plug-cat">Spring · Microservicios</div>
+    <div class="plug-grid">
+      <div class="plug">
+        <div class="top"><h4>Spring / Spring Boot</h4><span class="badge b-ult">Ultimate</span></div>
+        <p>El soporte de Spring de primera línea: navegación de beans, diagrama de dependencias, autocompletado en <code>application.yml</code>, y el <em>Endpoints tool window</em>.</p>
+        <p class="why">// Ver todos los endpoints REST y saltar de controller a la llamada en un click.</p>
+      </div>
+      <div class="plug">
+        <div class="top"><h4>Microservices Annotator</h4><span class="badge b-free">Gratis</span></div>
+        <p>Pone íconos en el gutter en cada método que toca red, base de datos o filesystem.</p>
+        <p class="why">// Entendés de un vistazo dónde un servicio sale a hablar con otro.</p>
+      </div>
+      <div class="plug">
+        <div class="top"><h4>HTTP Client (.http)</h4><span class="badge b-ult">Ultimate</span></div>
+        <p>Requests HTTP versionados en el repo, con environments, variables y scripting. Reemplaza Postman dentro del IDE.</p>
+        <p class="why">// Los .http viven junto al código y se revisan en el PR.</p>
+      </div>
+      <div class="plug">
+        <div class="top"><h4>Maven / Gradle Dependency Analyzer</h4><span class="badge b-bundle">Bundled</span></div>
+        <p>Ya viene incluido. Desenreda conflictos de versiones y dependencias transitivas.</p>
+        <p class="why">// Imprescindible cuando 12 microservicios comparten librerías.</p>
+      </div>
+    </div>
+
+    <div class="plug-cat">Redis · Datos</div>
+    <div class="plug-grid">
+      <div class="plug">
+        <div class="top"><h4>Iedis2</h4><span class="badge b-paid">De pago</span></div>
+        <p>El cliente Redis más completo para IntelliJ: explorador de keys, editor/runner de Lua, soporte cluster y SSH tunnel.</p>
+        <p class="why">// Para tu gateway de tokenización: inspeccionar keys sin salir del IDE.</p>
+      </div>
+      <div class="plug">
+        <div class="top"><h4>Database Tools & SQL</h4><span class="badge b-ult">Ultimate</span></div>
+        <p>DataGrip embebido: conexión a las DBs del banco, autocompletado SQL, comparación de esquemas, ejecución y refactor.</p>
+        <p class="why">// Una sola herramienta para Postgres, Oracle y el resto del core.</p>
+      </div>
+      <div class="plug">
+        <div class="top"><h4>JPA Buddy</h4><span class="badge b-free">Free / Pro</span></div>
+        <p>Adquirido por JetBrains. Genera entidades, repos Spring Data, DTOs y migraciones Flyway/Liquibase.</p>
+        <p class="why">// Acelera el boilerplate de la capa de persistencia.</p>
+      </div>
+      <div class="plug">
+        <div class="top"><h4>Big Data Tools / Kafka</h4><span class="badge b-ult">Ultimate</span></div>
+        <p>Cliente Kafka, explorador de topics y mensajes desde el IDE para arquitecturas event-driven.</p>
+        <p class="why">// Ver el tráfico entre servicios sin abrir otra consola.</p>
+      </div>
+    </div>
+
+    <div class="plug-cat">Testing · Carga</div>
+    <div class="plug-grid">
+      <div class="plug">
+        <div class="top"><h4>JMeter integration</h4><span class="badge b-free">Gratis</span></div>
+        <p>Lanza planes <code>.jmx</code> de JMeter como run configuration dentro de IntelliJ y ve resultados sin cambiar de ventana.</p>
+        <p class="why">// Pruebas de carga al lado del código que estás optimizando.</p>
+      </div>
+      <div class="plug">
+        <div class="top"><h4>SonarQube for IDE</h4><span class="badge b-free">Gratis</span></div>
+        <p>(antes SonarLint) Análisis estático en vivo: bugs, code smells y vulnerabilidades mientras escribís, con reglas del servidor SonarQube.</p>
+        <p class="why">// Shift-left de calidad y seguridad, clave en banca.</p>
+      </div>
+    </div>
+
+    <div class="plug-cat">Profiling · Observabilidad</div>
+    <div class="plug-grid">
+      <div class="plug">
+        <div class="top"><h4>IntelliJ Profiler</h4><span class="badge b-bundle">Bundled</span></div>
+        <p>async-profiler + JFR integrados. Flame graphs de CPU y memoria con un click, llevándote a la línea exacta.</p>
+        <p class="why">// Tu mejor amigo para diagnosticar saturación de memoria como la de Redis.</p>
+      </div>
+      <div class="plug">
+        <div class="top"><h4>OpenTelemetry / Jaeger</h4><span class="badge b-free">Gratis</span></div>
+        <p>Trae datos de tracing distribuido al editor y los asocia a la línea de código que generó el span.</p>
+        <p class="why">// Borra la línea entre desarrollo y observabilidad de producción.</p>
+      </div>
+      <div class="plug">
+        <div class="top"><h4>Spring Boot Actuator</h4><span class="badge b-ult">vía Spring/Ultimate</span></div>
+        <p>El soporte de Spring de Ultimate lee endpoints de Actuator (health, beans, mappings, metrics) desde el run dashboard.</p>
+        <p class="why">// Estado del servicio en vivo sin pegarle a /actuator a mano.</p>
+      </div>
+      <div class="plug">
+        <div class="top"><h4>Key Promoter X</h4><span class="badge b-free">Gratis</span></div>
+        <p>Cada vez que hacés algo con el mouse que tiene atajo, te lo recuerda con un popup.</p>
+        <p class="why">// El plugin que hace que esta sección 01 se te pegue de verdad.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ====================== 03 EDICIONES ====================== -->
+<section id="ediciones">
+  <div class="wrap">
+    <div class="sec-head">
+      <span class="sec-num">03</span>
+      <div><h2>Free vs Ultimate (modelo 2025.3)</h2></div>
+    </div>
+
+    <div class="alert">
+      <div class="tag">⚠ Lo que cambió — léelo primero</div>
+      <p>Desde <b>IntelliJ IDEA 2025.3</b> (diciembre 2025) ya <b>no existen instaladores separados</b> Community y Ultimate. Hay <b>un solo producto: "IntelliJ IDEA"</b>. Todo lo que era Community sigue gratis (incluso uso comercial), y <b>Ultimate pasó a ser una capa de suscripción</b> que desbloqueás dentro del mismo IDE, con trial de 30 días. Si tu suscripción expira, no te bloquean: el IDE simplemente vuelve al set de features gratis. La pregunta ya no es "cuál instalo", sino "qué me desbloquea la suscripción".</p>
+    </div>
+
+    <div class="ed-grid">
+      <div class="ed free">
+        <div class="ed-title">Free tier</div>
+        <div class="ed-sub">// lo que antes era Community + extras nuevos</div>
+        <ul>
+          <li><b>Java, Kotlin, Groovy, Scala</b> con refactors completos</li>
+          <li><b>Maven, Gradle, Ant</b> — soporte nativo de primera</li>
+          <li><b>Git / GitHub</b>, debugger y profiler (async + JFR)</li>
+          <li><b>JUnit / TestNG</b> y cobertura básica</li>
+          <li>Decompiler, análisis de código, inspecciones</li>
+          <li><b>Nuevo gratis:</b> highlighting Spring/Jakarta EE, SQL básico y wizard de Spring Boot</li>
+          <li>Visor de base de datos de solo lectura</li>
+        </ul>
+      </div>
+      <div class="ed ult">
+        <div class="ed-title">Ultimate (suscripción)</div>
+        <div class="ed-sub">// la capa que de verdad te sirve en banca + microservicios</div>
+        <ul>
+          <li><b>Soporte Spring / Spring Boot completo</b> — beans, endpoints, diagramas, config</li>
+          <li><b>Database Tools & SQL</b> (DataGrip): Postgres, Oracle, Redis, Mongo</li>
+          <li><b>HTTP Client</b> (.http versionables)</li>
+          <li><b>Docker · Kubernetes · Remote Dev</b></li>
+          <li><b>Jakarta EE, MicroProfile, Quarkus, Micronaut</b></li>
+          <li>Application Servers (Tomcat, WildFly…) y deployment</li>
+          <li><b>AI Assistant</b> y profiling avanzado</li>
+          <li>JavaScript/TypeScript y frameworks web</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="leverage">
+      <div class="plug-cat" style="margin-top:34px">Cómo exprimir Ultimate en tu día a día</div>
+      <div class="lev-grid">
+        <div class="lev"><h5>① Run Dashboard / Services</h5><p>Levantá y monitoreá varios microservicios a la vez en una sola ventana, con su estado y logs agrupados. Usá <em>Compound Run Configurations</em> para arrancar todo el stack local de un golpe.</p></div>
+        <div class="lev"><h5>② Endpoints tool window</h5><p>Lista todos los endpoints REST del proyecto y de servicios consumidos. Saltás de la definición del controller al sitio donde se llama, ideal para integraciones tipo TSYS/Monibyte.</p></div>
+        <div class="lev"><h5>③ HTTP Client en el repo</h5><p>Guardá los requests <code>.http</code> con environments por ambiente (dev/qa/prod). Se versionan, se revisan en PR y reemplazan colecciones de Postman sueltas.</p></div>
+        <div class="lev"><h5>④ Actuator + Spring beans</h5><p>Inspeccioná health, metrics y el grafo de beans en vivo desde el dashboard. Diagrama de dependencias para entender un servicio nuevo en minutos.</p></div>
+        <div class="lev"><h5>⑤ Database tools unificados</h5><p>Una sola herramienta para todas las DBs del banco: consola SQL con autocompletado, comparar esquemas entre ambientes y exportar resultados.</p></div>
+        <div class="lev"><h5>⑥ Profiler para incidentes</h5><p>Adjuntá el profiler a un servicio corriendo y sacá flame graphs de CPU/memoria. Lo que convierte "se satura la memoria" en "esta línea retiene los objetos".</p></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ====================== 04 TIPS & WORKFLOW ====================== -->
+<section id="tips">
+  <div class="wrap">
+    <div class="sec-head">
+      <span class="sec-num">04</span>
+      <div><h2>Tips, tricks & sistema</h2></div>
+      <p class="sec-desc">Los trucos que separan a quien "usa IntelliJ" de quien lo tiene en automático, más un método concreto para llegar ahí sin frustrarte.</p>
+    </div>
+
+    <div class="tip-grid">
+      <div class="tip"><div class="ic">⌥</div><h4>Scratch files</h4><p>Probá código o pegá un JSON sin ensuciar el proyecto con <span class="k">Ctrl+Alt+Shift+Insert</span>. Soportan ejecución, formato y resaltado por lenguaje.</p></div>
+      <div class="tip"><div class="ic">↺</div><h4>Local History</h4><p>Click derecho → Local History. Recuperás cualquier versión de un archivo aunque nunca hayas hecho commit. Te salva de un Ctrl+Z fatal.</p></div>
+      <div class="tip"><div class="ic">⚑</div><h4>Bookmarks con mnemónico</h4><p><span class="k">Ctrl+F11</span> marca una línea con una letra/número. Volvés a ella con <span class="k">Ctrl+&lt;número&gt;</span> desde cualquier archivo.</p></div>
+      <div class="tip"><div class="ic">⊞</div><h4>Actions on Save</h4><p>Settings → Tools → Actions on Save: reformatear y organizar imports automáticamente al guardar. Adiós a hacerlo a mano.</p></div>
+      <div class="tip"><div class="ic">⌕</div><h4>Structural Search</h4><p>Buscá por estructura de código, no por texto: "todos los <code>catch</code> vacíos" o "métodos sin <code>@Override</code>". Find Action → SSR.</p></div>
+      <div class="tip"><div class="ic">⧉</div><h4>Code With Me</h4><p>Pair programming remoto nativo (Ultimate). Compartís la sesión del IDE con Greivin sin screen-share laggy.</p></div>
+      <div class="tip"><div class="ic">⊟</div><h4>Distraction-free / Zen</h4><p>View → Appearance → Enter Zen Mode. Para foco profundo. <em>Presentation Mode</em> agranda todo: perfecto para tus workshops.</p></div>
+      <div class="tip"><div class="ic">⟳</div><h4>Settings Sync</h4><p>Sincroniza keymap, plugins y temas vía tu cuenta JetBrains. Mantené idénticos tu PC del trabajo y la Mac… respetando la separación corp/personal.</p></div>
+      <div class="tip"><div class="ic">↹</div><h4>Recent Locations</h4><p><span class="k">Ctrl+Shift+E</span>: no solo archivos recientes, sino los <em>lugares</em> exactos donde estuviste, con preview. Más preciso que el historial normal.</p></div>
+    </div>
+
+    <!-- Workflow -->
+    <div class="flow">
+      <div class="flow-title">El loop sin mouse</div>
+      <p class="flow-sub">Una sesión de desarrollo entera puede correr sin tocar el trackpad. El patrón mental es siempre el mismo: navegar → editar → refactorizar → correr → versionar.</p>
+      <div class="steps">
+        <div class="step"><h5>Navegar</h5><p>Llegá al código con <span class="k">⇧⇧</span> y <span class="k">Ctrl+B</span>. Nunca busques scrolleando.</p></div>
+        <div class="step"><h5>Editar</h5><p>Live templates + postfix + <span class="k">Alt+Enter</span> para todo lo demás.</p></div>
+        <div class="step"><h5>Refactor</h5><p>Extraé método/variable en caliente. Renombrá con <span class="k">⇧F6</span>.</p></div>
+        <div class="step"><h5>Correr</h5><p>Debug con breakpoint condicional y <span class="k">Alt+F8</span> para evaluar.</p></div>
+        <div class="step"><h5>Versionar</h5><p><span class="k">Ctrl+K</span> commit → revisás el diff → <span class="k">Ctrl+Shift+K</span> push.</p></div>
+      </div>
+    </div>
+
+    <!-- Método -->
+    <div class="method">
+      <div class="method-card">
+        <h4><span>MÉTODO</span> Adopción 5-por-semana</h4>
+        <ol>
+          <li><b>Instalá Key Promoter X.</b> Deja que te muestre qué acciones de mouse tienen atajo.</li>
+          <li><b>Elegí 5 hotkeys por semana</b> de esta hoja (empezá por la tarjeta de Navegación) y pegalos en un sticky en el monitor.</li>
+          <li><b>Prohibite el mouse</b> para esas 5 acciones esa semana, aunque sea más lento al inicio.</li>
+          <li><b>La siguiente semana</b> sumá 5 nuevos sin abandonar los anteriores. En ~6 semanas tenés los 30 core en automático.</li>
+          <li><b>Medí:</b> cuando Key Promoter X deje de molestarte, ya están internalizados.</li>
+        </ol>
+      </div>
+      <div class="method-card">
+        <h4><span>SETUP</span> Higiene del IDE</h4>
+        <ol>
+          <li><b>Activá Actions on Save</b> (reformat + optimize imports) una sola vez y olvidate.</li>
+          <li><b>Definí Compound Run Configs</b> con tus microservicios locales para arrancar el stack de un click.</li>
+          <li><b>Versioná tus .http</b> en cada repo: tu documentación viva de la API.</li>
+          <li><b>Creá live templates propios</b> para el boilerplate del banco (logging, manejo de errores, headers).</li>
+          <li><b>Settings Sync solo en lo personal;</b> mantené el perfil corp aparte para respetar la política.</li>
+        </ol>
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <span class="mono">IntelliJ IDEA Cheatsheet · Java + Microservicios</span>
+    <span class="mono">Keymap default · macOS/Windows · Modelo unificado 2025.3+</span>
+  </div>
+</footer>
+
+</body>
+</html>
