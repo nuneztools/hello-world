@@ -1,0 +1,104 @@
+schema_version: "1.0"
+
+workflow:
+  id: "cabaas-dependency-bump"
+  name: "CABAAS · Actualización de dependencias vulnerables"
+  version: "0.1.0"
+  author: "CCA / CABAAS"
+  description: >
+    Toma el export CSV de Snyk, lo agrupa por paquete, propone bumps por lote
+    y los aplica con verificación de build, pruebas y análisis estático.
+
+requires:
+  speckit_version: ">=1.0.0"
+  integrations:
+    any:
+      - "copilot"
+
+# Convención de rutas (fijas a propósito):
+#   reports/snyk_issues_detail.csv  <- export de Snyk (Modify Columns:
+#                                      PACKAGE_NAME_AND_VERSION + EXISTS_IN_DIRECT_DEPENDENCY)
+#   reports/triage.md               <- salida del script, insumo del agente
+#
+# Los pasos shell NO interpolan expresiones: cualquier valor que venga de
+# inputs o de la salida del agente quedaria como sintaxis de shell, y un paso
+# shell corre con los permisos del desarrollador y sin sandbox.
+
+inputs:
+  lote:
+    type: string
+    enum: ["A", "B", "C"]
+    default: "A"
+    prompt: "Lote a trabajar (A=directas prod, B=transitivas prod, C=solo pruebas)"
+
+steps:
+
+  # 1. Triage: 163 filas crudas -> una tabla corta. Lo hace PowerShell, no el agente.
+  - id: triage
+    type: shell
+    run: "powershell -NoProfile -File .specify/scripts/triage-snyk.ps1 -CsvPath reports/snyk_issues_detail.csv > reports/triage.md"
+
+  - id: review-triage
+    type: gate
+    message: "Revisar el triage antes de planificar. Confirmar que los lotes y las versiones destino tienen sentido."
+    show_file: "reports/triage.md"
+    options: [approve, reject]
+    on_reject: abort
+
+  # 2. Inventario del build real. El triage dice QUE subir; esto dice si SE PUEDE.
+  - id: dependency-insight
+    type: prompt
+    prompt: >
+      Lee reports/triage.md y build.gradle.
+
+      Para cada paquete del lote seleccionado, determina:
+      1. Si la version la fija el BOM de Spring Boot o una declaracion explicita
+         en build.gradle.
+      2. Que propiedad del BOM habria que sobrescribir en el bloque ext,
+         o que linea de dependencies habria que cambiar.
+      3. Si algun plugin interno (ca-baas-gradle-plugin, ca-baas-soap-plugin,
+         com.bns.cabaas.java-plugin, version caBaasBaseLibrary) restringe esa version.
+
+      NO modifiques archivos. Escribi el resultado en reports/bump-plan.md,
+      marcando cada linea como HECHO (verificado en el build) o SUPUESTO
+      (requiere confirmacion). Si necesitas el arbol real de dependencias,
+      indica que comando dependencyInsight haria falta en vez de asumir.
+
+  - id: review-plan
+    type: gate
+    message: "Tech Lead: validar el plan de bumps. Revisar especialmente los SUPUESTOS y el impacto sobre caBaasBaseLibrary."
+    show_file: "reports/bump-plan.md"
+    options: [approve, reject]
+    on_reject: abort
+
+  # 3. Aplicar. Un solo lote por corrida: si algo se rompe, el diff es acotado.
+  - id: apply
+    type: command
+    command: speckit.implement
+    input:
+      args: >
+        Aplica unicamente los cambios aprobados en reports/bump-plan.md para el
+        lote indicado. No toques codigo de negocio ni versiones fuera del plan.
+
+  - id: build-and-test
+    type: shell
+    run: ".\\gradlew clean test"
+
+  - id: sonar
+    type: shell
+    run: ".\\gradlew sonar"
+
+  # 4. Cierre: que quedo resuelto y que no. Insumo del siguiente escaneo.
+  - id: report
+    type: prompt
+    prompt: >
+      Escribi reports/bump-result.md con:
+      - paquetes efectivamente actualizados, version anterior y nueva;
+      - resultado de build y pruebas;
+      - hallazgos de Sonar introducidos por el cambio, si los hay;
+      - vulnerabilidades del lote que NO quedaron cubiertas y por que;
+      - recordatorio de que el lote D (sin fix disponible) sigue abierto y
+        requiere decision del Tech Lead.
+
+      Solo hechos verificables de la corrida. No estimes el conteo final de
+      vulnerabilidades: eso lo confirma el proximo escaneo de Snyk.
