@@ -1,0 +1,18 @@
+Unblock-File (Get-Command copilot).Source
+Set-ExecutionPolicy -Scope CurrentUser RemoteSigned
+
+$p = "http://127.0.0.1:9000"
+"http_proxy","https_proxy","ftp_proxy","HTTP_PROXY","HTTPS_PROXY","FTP_PROXY" |
+  % { [Environment]::SetEnvironmentVariable($_, $p, "User") }
+[Environment]::SetEnvironmentVariable("NO_PROXY", "localhost,.bns", "User")
+[Environment]::SetEnvironmentVariable("no_proxy", "localhost,.bns", "User")
+$j = "-Dhttp.proxyHost=127.0.0.1 -Dhttp.proxyPort=9000 -Dhttps.proxyHost=127.0.0.1 -Dhttps.proxyPort=9000"
+[Environment]::SetEnvironmentVariable("JAVA_OPTS", $j, "User")
+[Environment]::SetEnvironmentVariable("MAVEN_OPTS", $j, "User")
+
+
+systemProp.http.proxyHost=127.0.0.1
+  systemProp.http.proxyPort=9000
+  systemProp.https.proxyHost=127.0.0.1
+  systemProp.https.proxyPort=9000
+  systemProp.http.nonProxyHosts=localhost|*.bns
