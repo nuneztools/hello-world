@@ -1,1 +1,0 @@
-"HTTP_PROXY","HTTPS_PROXY","NO_PROXY","JAVA_OPTS" | % { "$_ = " + [Environment]::GetEnvironmentVariable($_, "User") }
