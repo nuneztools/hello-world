@@ -299,3 +299,106 @@ Antes de armar nada, corran esto:
 ```
 
 Y en paralelo, el correo a quien mantiene `ca-baas-gradle-plugin` preguntando si `caBaasBaseLibrary` soporta Java 21 y si hay una versión planificada que lo haga. Esa respuesta decide si el taller de la próxima semana es sobre migración o sobre esperar.
+
+##Copilot M365 Triage
+
+
+Este archivo es un export de Snyk con vulnerabilidades del microservicio
+ca-baas-credit (Java 17, Spring Boot 3.5.14, Gradle).
+
+Agrupá los hallazgos por el valor de PACKAGE_NAME_AND_VERSION y clasificá
+cada paquete en uno de estos cuatro lotes:
+
+- Lote A: EXISTS_IN_DIRECT_DEPENDENCY = true y PROJECT_NAME distinto de integTest
+- Lote B: EXISTS_IN_DIRECT_DEPENDENCY = false y PROJECT_NAME distinto de integTest
+- Lote C: PROJECT_NAME = integTest
+- Lote D: COMPUTED_FIXABILITY = "No Fix Supported"
+
+Para cada paquete dame una fila con:
+paquete | versión actual | versión destino | severidad máxima | issues | CVEs
+
+Reglas de la versión destino:
+- Es la MENOR de FIXED_IN_VERSION que sea mayor o igual a la versión actual.
+  Ejemplo: actual 6.3.0, fixes 5.7.2 / 6.3.1 / 7.5.2 → la respuesta es 6.3.1.
+- Si un paquete tiene varios issues, tomá la MAYOR de esas versiones mínimas,
+  para que una sola versión cubra todos.
+- Si el paquete cae en el lote D, dejá la versión destino vacía.
+
+Notas sobre el formato del CSV:
+- PACKAGE_NAME_AND_VERSION puede traer dos puntos, como
+  "com.fasterxml.jackson.core:jackson-databind: 2.21.2". El nombre es todo lo
+  anterior al último ": ".
+- Una celda puede traer varios paquetes separados por coma.
+- CVE y FIXED_IN_VERSION vienen como listas entre corchetes y comillas dobles.
+- Algunas filas no tienen CVE. Marcalas como "(sin CVE)".
+
+Ordená cada lote por severidad descendente.
+Entregá cuatro tablas en Markdown, una por lote, sin texto adicional.
+Al final agregá una línea con el conteo de paquetes por lote.
+
+
+
+
+## SpecKit Triage
+
+/speckit-specify Actualizar las dependencias vulnerables del LOTE A listadas en
+reports/triage.md para ca-baas-credit.
+
+Alcance: solo los paquetes del lote A. NO se actualiza Java ni Spring Boot.
+NO se modifica comportamiento de negocio. No se agregan dependencias nuevas.
+
+Contexto: microservicio bancario que procesa operaciones de tarjeta de crédito
+con integraciones hacia TSYS vía DHI. Arquitectura por capas
+Controller → Delegate → Operation → Gateway.
+
+Criterios de satisfacción:
+1. ./gradlew clean build compila sin errores.
+2. Todas las pruebas existentes pasan sin modificar sus aserciones.
+3. SonarQube no reporta issues nuevos.
+4. El lote D queda documentado como pendiente, no se intenta resolver acá.
+
+
+
+
+/speckit-clarify
+
+
+
+
+/speckit-plan Para cada paquete del lote A, determiná si la versión la fija el
+BOM de Spring Boot o una declaración explícita en build.gradle, y cuál es el
+cambio exacto: sobrescribir una propiedad en el bloque ext, o cambiar una línea
+de dependencies.
+
+Verificá contra build.gradle real, no asumas. Si necesitás el árbol de
+dependencias, indicá qué comando dependencyInsight haría falta en vez de
+inventar la respuesta.
+
+Revisá si caBaasBaseLibrary 10.3.13 o los plugins internos
+(ca-baas-gradle-plugin, ca-baas-soap-plugin, com.bns.cabaas.java-plugin)
+restringen alguna de esas versiones.
+
+Marcá cada decisión como HECHO (verificado en el build) o SUPUESTO
+(requiere confirmación).
+
+NO ejecutes ./gradlew build en este paso. La verificación con build real va
+como tarea del tasks.md.
+
+
+
+
+/speckit-tasks Una tarea por paquete. Al final agregá una tarea de build, una
+de pruebas y una de Sonar.
+
+
+
+/speckit-implement Aplicá únicamente los cambios aprobados en plan.md.
+Trabajá en tandas de máximo 5 tareas. Al terminar cada tanda, pará y reportá
+qué quedó hecho antes de seguir. No toques código de negocio ni versiones
+fuera del plan.
+
+
+
+.\gradlew clean test
+.\gradlew sonar
+git diff --stat
