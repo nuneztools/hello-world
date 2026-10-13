@@ -689,3 +689,55 @@ No toques build.gradle ni ejecutes el build todavía.
 ```
 
 Cuando te devuelva la tabla de D-1 a D-6, pasámela y las revisamos antes de que sigas a `tasks`.
+
+
+3ra parte del Plan
+
+El análisis está bien hecho y la evidencia es sólida: los POMs con parent declarado para D-2/D-3, y el `tomcat-embed-el` sin bloque `<dependencies>` para D-1. **Ratificá las cinco y descartá D-1.**
+
+Tres cosas que agregaría antes de pasar a `tasks`:
+
+**1. D-2 es la de peor relación riesgo/detección, y eso se resuelve con un grep.** Si el código no usa la API Fluent de HttpComponents, el riesgo es teórico. Vale la pena confirmarlo en diez segundos en vez de arrastrar la duda.
+
+**2. El hallazgo de Lettuce merece una prueba específica.** V-R5 está bien identificado: 19 parches por encima de la matriz probada, en el stack de reconexión, y un `SET/GET` feliz no lo toca. La verificación no puede ser "Redis responde", tiene que ser "Redis se recupera tras perder la conexión".
+
+**3. Ojo con el crecimiento del cambio.** Ratificar las cinco lleva el PR de 12 coordenadas a más de 30 artefactos, sobre todo por los 12 módulos de Spring Framework de D-6. Es correcto y no negociable —el co-versionado de Framework no admite mezcla—, pero el gate de `acceptanceTest` que definiste tiene que cubrir eso, y la descripción del PR debe decirlo.
+
+Y un detalle para que no te confunda después: ratificar D-5 **no cierra** la crítica de `spring-security-oauth2-jose`. Esa necesita 7.0.7 y queda diferida a Boot 4. D-5 solo mantiene la familia coherente en 6.5.11.
+
+Pegale esto:
+
+```
+RATIFICO D-2, D-3, D-4, D-5 y D-6. DESCARTO D-1 (tomcat-embed-el queda fuera:
+POM 10.1.56 sin bloque <dependencies>, comparte numeración pero no API).
+
+Antes de /speckit.tasks, tres cosas:
+
+1. D-2 — verificá si el código realmente usa la API Fluent:
+   buscá imports de org.apache.hc.client5.http.fluent en src/.
+   Si no hay uso, documentalo en plan.md: el riesgo queda como teórico y la
+   ratificación es solo preventiva. Si hay uso, identificá en qué clases, para
+   dirigir la verificación ahí.
+
+2. V-R5 (Lettuce / reconexión) — no basta con verificar que Redis responde.
+   Agregá al tasks.md una tarea de verificación explícita de reconexión:
+   provocar pérdida de conexión al Redis y confirmar que el cliente se recupera
+   y reanuda operaciones. Un SET/GET en camino feliz no cubre este riesgo.
+   Si no hay forma de simular eso en el entorno disponible, decilo y marcalo
+   como riesgo residual para el PR en vez de darlo por verificado.
+
+3. Alcance real — actualizá plan.md con el conteo final de artefactos que
+   toca el cambio una vez ratificadas D-2 a D-6 (no solo las 12 coordenadas
+   objetivo, sino todos los artefactos arrastrados por coherencia de familia,
+   incluidos los 12 módulos de Spring Framework de D-6). Ese número va en la
+   descripción del PR.
+
+4. Dejá explícito en plan.md que ratificar D-5 NO cierra la vulnerabilidad
+   crítica de spring-security-oauth2-jose (requiere 7.0.7, diferida a Boot 4).
+   D-5 solo preserva coherencia de familia en 6.5.11. Esa crítica sigue abierta
+   al terminar la Fase 1.
+
+Confirmado también RK-7: no tocar netty-tcnative ni netty-incubator.
+
+Cuando termines esto, seguimos con /speckit.tasks. No ejecutes el build todavía.
+```
