@@ -635,3 +635,57 @@ git diff
 **Qué esperar al final:** si las tres tandas pasan, cerrás alrededor de 50 issues, incluidas 25 de severidad crítica entre netty, tomcat y httpclient5. Eso te quita la presión inmediata y te deja hacer Boot 4 con tiempo.
 
 **Si la Tanda 3 rompe**, sacá micrometer y reactor y mandalos a la fase de Boot 4. No vale la pena pelearse con ellos ahora: son 6 issues de 50.
+
+
+
+Segunda parte del Plan:
+
+Sí, en la misma ventana del chat del plan. Pegale esto tal cual:
+
+```
+Decisiones:
+
+1. ACEPTO reducir el alcance de 14 a 12 coordenadas. Enmendá spec.md:
+   - Actualizá FR-014 y FR-015 para que el alcance sean 12 coordenadas.
+   - Agregá que micrometer-core y reactor-core quedan explícitamente
+     diferidos a la fase de migración a Spring Boot 4, con la justificación
+     verificada: sus versiones destino solo existen en
+     spring-boot-dependencies:4.0.0.
+
+2. NO ratifico todavía D-1 a D-6. Necesito verlas primero. Listámelas en una
+   tabla con estas columnas:
+   familia afectada | versión que queda | versión del resto de la familia |
+   qué incompatibilidad concreta podría producir | cómo se detectaría
+   (compilación, prueba unitaria, o solo en runtime)
+
+   Separá las que son desviaciones reales de coherencia de familia de las que
+   son artefactos independientes sin ciclo de release compartido. No las
+   presentes todas como equivalentes.
+
+3. Agregá a plan.md una sección "Hallazgo estructural" con esto:
+
+   El proyecto no aplica el BOM de Spring Boot: no hay
+   io.spring.dependency-management, ni dependencyManagement{}, ni platform().
+   Consecuencia: no existe un piso de versiones y las dependencias derivan
+   libremente. Esto explica el volumen del reporte de Snyk.
+   Evidencia: netty 4.1.118.Final vs 4.1.132 del BOM; reactor-core 3.6.6 vs
+   3.7.18; mssql-jdbc 10.2.1.jre8 vs 12.10.2.jre11.
+   Recomendación: evaluar la adopción del BOM como parte de la migración a
+   Spring Boot 4, NO en este cambio. Fuera de alcance de la Fase 1.
+
+4. Riesgo adicional a verificar antes de implementar: si netty viene de
+   lettuce-core:6.6.0.RELEASE, forzar netty a 4.1.137.Final vía constraints le
+   impone a Lettuce una versión contra la que no fue probada, y Lettuce está en
+   el camino de operaciones con efecto financiero.
+   Revisá qué rango o versión de netty declara el POM de
+   lettuce-core:6.6.0.RELEASE y si 4.1.137.Final cae dentro. Si declara rango
+   cerrado o versión exacta, marcalo como riesgo y proponé verificación
+   específica de Redis en las pruebas.
+
+Confirmá el mecanismo propuesto: platform() nativo de Gradle + constraints +
+edición de las 3 líneas ya declaradas (httpclient5, mssql-jdbc, spring-ws-core).
+
+No toques build.gradle ni ejecutes el build todavía.
+```
+
+Cuando te devuelva la tabla de D-1 a D-6, pasámela y las revisamos antes de que sigas a `tasks`.
