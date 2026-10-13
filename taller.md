@@ -476,3 +476,162 @@ Mantené el idioma actual del AGENTS.md.
 .\gradlew clean test
 .\gradlew sonar
 git diff --stat
+
+
+
+
+Aqui inicia la Fase 1 de Snyk Fix
+
+Va la Fase 1. Antes de los prompts, tres ajustes técnicos que tienen que estar en el spec o el agente los va a hacer mal.
+
+**Netty tiene que quedar en una sola versión.** El triage pide tres distintas (4.1.137, 4.1.136, 4.1.135) porque calculó el mínimo por artefacto. Netty no funciona así: todos sus artefactos van alineados. **Todo a 4.1.137.Final.**
+
+**Tomcat igual.** `embed-core` pide 10.1.56 y `embed-websocket` 10.1.55. **Ambos a 10.1.56.**
+
+**Micrometer y Reactor son salto de generación, no parche.** `micrometer-core 1.15.11 → 1.16.7` y `reactor-core 3.6.6 → 3.8.7` cruzan a la línea siguiente, que probablemente es la que acompaña a Boot 4. Los separo en un sub-lote aparte, para que si rompen no se lleven puestos a los demás.
+
+---
+
+## specify
+
+```
+/speckit-specify Actualizar las dependencias vulnerables del sub-lote A1 de
+ca-baas-credit, sobre Spring Boot 3.5.14 y Java 17.
+
+ALCANCE EXPLÍCITO. Solo estos paquetes:
+
+Grupo A1.1 — alineación de familia (una sola versión por familia):
+- io.netty:* (netty-handler, netty-codec, netty-transport-native-unix-common)
+  4.1.118.Final → 4.1.137.Final  [Critical, 10 issues]
+- org.apache.tomcat.embed:* (tomcat-embed-core, tomcat-embed-websocket)
+  10.1.54 → 10.1.56  [Critical, 12 issues]
+
+Grupo A1.2 — bumps independientes:
+- org.apache.httpcomponents.client5:httpclient5   5.4.2 → 5.6.4   [Critical, 3]
+- org.apache.httpcomponents.core5:httpcore5-h2    5.3.3 → 5.4.3   [High, 3]
+- ch.qos.logback:logback-core                     1.5.32 → 1.5.36 [High, 3]
+- com.microsoft.sqlserver:mssql-jdbc        10.2.1.jre8 → 10.2.4.jre8 [High, 1]
+- org.apache.commons:commons-lang3                3.17.0 → 3.18.0 [High, 1]
+- org.springframework.data:spring-data-commons    3.5.11 → 3.5.12 [High, 4]
+- org.springframework.data:spring-data-keyvalue   3.5.11 → 3.5.12 [Medium, 1]
+- org.springframework.security:spring-security-web 6.5.10 → 6.5.11 [High, 2]
+- org.springframework.ws:spring-ws-core           4.1.3 → 4.1.4   [High, 1]
+- org.springframework.ws:spring-xml               4.1.3 → 4.1.4   [High, 1]
+- org.springframework:spring-core                 6.2.18 → 6.2.19 [Medium, 1]
+
+Grupo A1.3 — salto de generación, mayor riesgo:
+- io.micrometer:micrometer-core    1.15.11 → 1.16.7 [High, 4]
+- io.projectreactor:reactor-core   3.6.6 → 3.8.7    [High, 2]
+
+FUERA DE ALCANCE (no tocar):
+- Cualquier paquete que requiera Spring Framework 7 o Spring Security 7:
+  spring-security-core, spring-security-crypto, spring-security-oauth2-jose,
+  spring-context-support, spring-expression, spring-data-jpa.
+  Esos van en una fase posterior junto con Spring Boot 4.
+- El lote D (sin fix disponible).
+- El lote C (integTest, Node). No llega al artefacto desplegado.
+- Java 17 → 21. Es un cambio independiente.
+- No se actualiza Spring Boot. Queda en 3.5.14.
+- No se modifica comportamiento de negocio.
+
+CONTEXTO: microservicio bancario de tarjeta de crédito, integraciones hacia
+TSYS vía DHI. Arquitectura Controller → Delegate → Operation → Gateway.
+Stack SOAP (jaxws, spring-ws). Plugins internos caBaasBaseLibrary 10.3.13.
+
+CRITERIOS DE SATISFACCIÓN:
+1. ./gradlew clean build compila sin errores.
+2. Todas las pruebas pasan sin modificar sus aserciones.
+3. SonarQube no introduce issues nuevos.
+4. Los artefactos de cada familia (netty, tomcat, spring-data) quedan en una
+   única versión coherente. Verificable con dependencyInsight.
+5. Queda documentado qué issues del reporte Snyk cubre este cambio y cuáles no.
+```
+
+## clarify
+
+```
+/speckit-clarify
+```
+
+## plan
+
+```
+/speckit-plan Determiná, contra build.gradle y el árbol real de dependencias,
+CÓMO se aplica cada bump.
+
+Pregunta central a resolver primero: ¿estos paquetes están declarados
+explícitamente en build.gradle, o los trae el BOM de Spring Boot 3.5.14 como
+transitivas? El reporte de Snyk los marca como "direct dependency", pero en un
+proyecto Spring Boot netty, tomcat y logback normalmente son transitivas de los
+starters. No asumas: verificá.
+
+Según el caso, el cambio es distinto:
+- Si lo fija el BOM → sobrescribir la propiedad correspondiente en el bloque ext
+  (netty.version, tomcat.version, logback.version, etc.). Confirmá el nombre
+  exacto de cada propiedad contra la documentación de Spring Boot 3.5, no lo
+  inventes.
+- Si está declarado en dependencies → cambiar esa línea.
+
+Requisitos de coherencia:
+- Las tres librerías de io.netty deben quedar en 4.1.137.Final. Nunca mezcladas.
+- Los dos artefactos de tomcat.embed deben quedar en 10.1.56.
+- spring-data-commons y spring-data-keyvalue pertenecen al mismo tren; si el BOM
+  de Spring Data los fija en conjunto, subí el tren completo en vez de artefacto
+  por artefacto.
+
+Riesgos a evaluar explícitamente:
+- micrometer-core 1.15 → 1.16 y reactor-core 3.6 → 3.8 cruzan de generación.
+  Determiná si son compatibles con Boot 3.5.14 o si en realidad requieren Boot 4.
+  Si requieren Boot 4, sacalos del alcance y decilo.
+- spring-core 6.2.19 y spring-security-web 6.5.11: verificá que subir estos sin
+  subir el resto de Framework/Security no genere mezcla de versiones dentro de
+  la misma familia.
+- Si algún plugin interno (caBaasBaseLibrary 10.3.13, ca-baas-gradle-plugin,
+  ca-baas-soap-plugin) restringe alguna de estas versiones, marcalo como
+  bloqueante.
+
+Marcá cada decisión como HECHO (verificado en el build o en documentación
+oficial citada) o SUPUESTO.
+
+NO ejecutes ./gradlew build en este paso. La verificación va en tasks.md.
+```
+
+## tasks
+
+```
+/speckit-tasks Agrupá las tareas en tres tandas, en este orden:
+
+Tanda 1 — A1.1: alineación de familias (netty a 4.1.137.Final, tomcat a 10.1.56).
+Tanda 2 — A1.2: los bumps independientes.
+Tanda 3 — A1.3: micrometer y reactor, solo si el plan confirmó compatibilidad
+          con Boot 3.5.
+
+Cada tanda termina con: build, pruebas, y un dependencyInsight que verifique
+que las versiones efectivas son las esperadas.
+
+Agregá una tarea final que escriba reports/bump-result-fase1.md con qué issues
+del reporte Snyk quedaron cubiertos y cuáles siguen abiertos.
+```
+
+## implement
+
+```
+/speckit-implement Aplicá solo la Tanda 1. Al terminar, pará y reportá qué
+cambió antes de seguir con la Tanda 2.
+```
+
+Y repetís el `implement` por tanda. Entre tanda y tanda, en terminal:
+
+```powershell
+.\gradlew clean build
+.\gradlew test
+.\gradlew dependencyInsight --dependency netty-handler --configuration runtimeClasspath
+.\gradlew dependencyInsight --dependency tomcat-embed-core --configuration runtimeClasspath
+git diff
+```
+
+---
+
+**Qué esperar al final:** si las tres tandas pasan, cerrás alrededor de 50 issues, incluidas 25 de severidad crítica entre netty, tomcat y httpclient5. Eso te quita la presión inmediata y te deja hacer Boot 4 con tiempo.
+
+**Si la Tanda 3 rompe**, sacá micrometer y reactor y mandalos a la fase de Boot 4. No vale la pena pelearse con ellos ahora: son 6 issues de 50.
