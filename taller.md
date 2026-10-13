@@ -946,3 +946,59 @@ Cambiá en el `specify`:
 ```
 
 y quitá la línea que lo pone fuera de alcance. Agregá una Tanda 0 en el `tasks` con el cambio de toolchain y las librerías de instrumentación (JaCoCo, Lombok, ByteBuddy), antes de tocar Spring. Así, si truena ahí, sabés que fue el JDK.
+
+
+
+Aclaracion de Shell Command....
+
+
+`**` no es recursivo en PowerShell. A diferencia de bash o de los globs de Git, PowerShell trata `**` igual que `*`: un solo nivel. Entonces `.\src\**\*.java` buscó en `src\<un-directorio>\*.java` y nada más — y tus clases están cinco o seis niveles abajo (`src\main\java\com\bns\baas\credit\...`). Cero archivos leídos, cero coincidencias, cero salida, y `Tee-Object` sin nada que escribir no crea el archivo.
+
+No es que no haya `@MockBean`. Es que no miró.
+
+Confirmalo primero:
+
+```powershell
+Get-ChildItem -Path .\src -Recurse -Filter *.java | Measure-Object
+```
+
+Si eso te da unos cuantos cientos, el problema era el patrón de ruta.
+
+## Comandos corregidos
+
+```powershell
+Get-ChildItem -Path .\src -Recurse -Filter *.java |
+  Select-String -Pattern '@MockBean|@SpyBean' |
+  Tee-Object -FilePath docs\migration\inventory-mockbean.log
+
+Get-ChildItem -Path .\src -Recurse -Filter *.java |
+  Select-String -Pattern 'org\.springframework\.cloud\.' |
+  Tee-Object -FilePath docs\migration\inventory-cloud-connectors.log
+```
+
+Dos cambios además del `-Recurse`: comillas simples, para que PowerShell no toque la cadena antes de que la vea el motor de regex; y puntos escapados, porque sin escapar `.` es "cualquier carácter" y te mete falsos positivos.
+
+Para los Cloud Connectors conviene ir más ancho de lo que tenías. Cualquier `import org.springframework.cloud.` es candidato, no solo `CloudFactory`. Si querés separar imports de usos:
+
+```powershell
+Get-ChildItem -Path .\src -Recurse -Filter *.java |
+  Select-String -Pattern 'org\.springframework\.cloud\.' |
+  Group-Object Filename |
+  Sort-Object Count -Descending
+```
+
+Eso te da el archivo y cuántas líneas tocan, que es lo que necesitás para estimar.
+
+## Un detalle sobre los archivos vacíos
+
+Si una búsqueda da cero coincidencias de verdad, `Tee-Object` igual no crea el archivo y quedás sin evidencia de que buscaste. La ausencia confirmada vale tanto como el hallazgo —sobre todo para `@MockBean`, donde cero significa que ese ítem de la migración de Boot 4 no te aplica. Forzá el archivo así:
+
+```powershell
+$m = Get-ChildItem -Path .\src -Recurse -Filter *.java |
+     Select-String -Pattern '@MockBean|@SpyBean'
+if ($m) { $m | Out-File docs\migration\inventory-mockbean.log }
+else { "Sin coincidencias de @MockBean/@SpyBean en src/ al $(Get-Date -Format 'yyyy-MM-dd')" |
+       Out-File docs\migration\inventory-mockbean.log }
+```
+
+Veo en el log de arriba que ya tenés dos señales reales de migración que sí van a dar trabajo: `setHttpClient(HttpClient)` en `HttpComponentsMessageSender` (`TimeOutUtils.java:24`) y `setObjectMapper(ObjectMapper)` en `Jackson2JsonRedisSerializer` (`CachingConfig.java:48`), ambas marcadas *for removal*. Esa segunda es la que te va a cruzar con Jackson 3 en Fase 2 — el serializador de Redis cambia de paquete y de firma a la vez. Vale la pena que `baseline-deprecations.log` quede completo antes de tocar nada.
