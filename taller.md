@@ -300,6 +300,17 @@ Antes de armar nada, corran esto:
 
 Y en paralelo, el correo a quien mantiene `ca-baas-gradle-plugin` preguntando si `caBaasBaseLibrary` soporta Java 21 y si hay una versión planificada que lo haga. Esa respuesta decide si el taller de la próxima semana es sobre migración o sobre esperar.
 
+
+
+
+
+
+
+
+
+
+
+
 ##Copilot M365 Triage
 
 
@@ -396,6 +407,69 @@ de pruebas y una de Sonar.
 Trabajá en tandas de máximo 5 tareas. Al terminar cada tanda, pará y reportá
 qué quedó hecho antes de seguir. No toques código de negocio ni versiones
 fuera del plan.
+
+
+
+
+
+
+
+## Update Agents.dm
+
+
+Revisá el AGENTS.md de este repo (ca-baas-credit) y proponé una versión mejorada. Antes de escribir, explorá el código. No inventes nada: si algo no tiene evidencia en el código, marcalo como "hipótesis" o dejalo fuera. Mostrame el diff propuesto antes de aplicar cambios.
+
+## 1. Optimización para cache de tokens
+- El AGENTS.md debe ser ESTABLE: nada de fechas, "última actualización", estado de tareas en curso ni contenido volátil. Cada edición invalida el prefijo cacheado de todas las sesiones.
+- Ordená el contenido de más estable (reglas, arquitectura) a menos estable.
+- Mantenelo conciso (objetivo: menos de ~250 líneas). Lo detallado va en archivos aparte (por ejemplo docs/agents/architecture.md y docs/agents/upgrade-playbook.md). El AGENTS.md los referencia y explica cuándo leerlos.
+- No hardcodees versiones de librerías, Java ni Spring. Apuntá a la fuente de verdad (build.gradle, gradle.properties, libs.versions.toml si existe).
+- Evaluá si conviene usar .github/instructions/*.instructions.md con `applyTo` para reglas que solo aplican a ciertos archivos (ej. build.gradle) y explicame la recomendación.
+- Agregá reglas de comportamiento que ahorren tokens:
+  - buscar con grep/símbolos antes de abrir archivos completos;
+  - no leer carpetas generadas (build/, generatedSoap, código generado de OpenAPI, .gradle/);
+  - no releer archivos sin cambios;
+  - ejecutar tareas Gradle específicas en vez de builds completos cuando sea posible;
+  - no pegar logs completos, solo el fragmento relevante.
+
+## 2. Actualización de librerías, Java y Spring
+Creá un playbook (archivo separado, referenciado desde AGENTS.md) para:
+a) actualizar dependencias puntuales, por ejemplo a partir de un reporte de vulnerabilidades de Snyk;
+b) migrar Java (17 → 21) y Spring Boot (3 → 4).
+Incluí:
+- cómo leer las versiones actuales y dónde se declaran;
+- compatibilidad a verificar: Gradle wrapper, toolchain de Java, Lombok, plugins de Gradle (incluida la generación SOAP/OpenAPI y GenerateSoapClientTask con configuration cache), Jackson y Jakarta;
+- consultar las guías oficiales de migración en lugar de asumir cambios;
+- un cambio lógico por commit (separar el upgrade de runtime de los cambios de dependencias y de los fixes de código);
+- verificación obligatoria: `./gradlew clean compileJava`, luego tests unitarios, luego integTest. No confiar en builds cacheados;
+- no cambiar comportamiento funcional durante un upgrade;
+- revisar issues nuevos de SonarQube introducidos por el cambio.
+
+## 3. Estructura del proyecto
+Documentá la estructura de carpetas/paquetes de ca-baas-credit con la responsabilidad de cada una, según evidencia del código. Incluí main, test, integTest, recursos y código generado.
+
+## 4. Patrones de diseño
+Identificá los patrones que realmente se observan (ej. Delegate, Command/Strategy en Operations, Gateway/Adapter, Factory, Builder vía Lombok). Para cada uno, citá 1-2 clases de ejemplo como evidencia. Distinguí entre patrón confirmado e hipótesis. No clasifiques el sistema como DDD solo por la existencia de paquetes `domain` o `factory`.
+
+## 5. Flujo de una petición REST
+Describí el flujo usual (se observa Controller → Delegate → Operation → Gateway) usando un endpoint real como ejemplo:
+- dónde se valida;
+- dónde se mapean los DTOs;
+- dónde se llama a sistemas externos (DHI/TSYS, ca-baas-globaltc, ca-baas-keymaster, otros ca-baas-*);
+- cómo se manejan errores y excepciones.
+Un diagrama Mermaid corto es bienvenido.
+
+## 6. Reglas adicionales a incluir
+- Datos sensibles: nunca loguear ni persistir números de tarjeta, cuentas o Core IDs en formato natural. Documentá el uso de surrogate/desurrogate (keymaster) según lo que veas en el código.
+- Operaciones con efecto financiero (DHI/TSYS, reversiones): no agregar retries automáticos sin analizar la idempotencia; señalar el riesgo.
+- Convenciones Sonar conocidas: `lombok.addLombokGeneratedAnnotation = true`; constantes String en enums dentro de una clase anidada privada `Messages`.
+- Convenciones de tests existentes (unit, integTest, APITests) y cómo ejecutarlas.
+- Si un cambio introduce deuda técnica solicitada, documentarla en vez de "corregirla" sin consultar.
+
+Mantené el idioma actual del AGENTS.md.
+
+
+
 
 
 
