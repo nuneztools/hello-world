@@ -741,3 +741,208 @@ Confirmado también RK-7: no tocar netty-tcnative ni netty-incubator.
 
 Cuando termines esto, seguimos con /speckit.tasks. No ejecutes el build todavía.
 ```
+
+
+
+FASE 2 .......
+
+
+## El archivo va antes, y fuera de `specs/`
+
+Ponelo en una ruta estable que no dependa del número de feature:
+
+```
+docs/migration/target-matrix.md
+```
+
+Dos razones: evitás el problema del huevo y la gallina, y ese documento sobrevive a la feature. Te va a servir también cuando migres los otros microservicios.
+
+Commiteálo antes de empezar. Después, en el prompt de `specify`, lo referenciás por esa ruta y listo.
+
+---
+
+## Antes de SpecKit: resolver los `[POR CONFIRMAR]`
+
+Son diez minutos y hacen que el `plan` salga con HECHOS en vez de SUPUESTOS.
+
+```powershell
+cd C:\Development\Projects\ca-baas-credit
+git checkout -b feature/CCACCS-XXX-upgrade-spring-boot-4
+
+# Baseline: cómo está todo ANTES de tocar nada
+.\gradlew clean build 2>&1 | Tee-Object -FilePath docs\migration\baseline-boot35-build.log
+.\gradlew acceptanceTest 2>&1 | Tee-Object -FilePath docs\migration\baseline-boot35-acceptance.log
+
+# Advertencias de deprecación: todo esto desaparece en Boot 4
+.\gradlew clean compileJava --rerun-tasks 2>&1 |
+  Select-String -Pattern "deprecat" |
+  Tee-Object -FilePath docs\migration\baseline-deprecations.log
+
+# Inventario de lo que hay que migrar
+Select-String -Path .\src\**\*.java -Pattern "@MockBean|@SpyBean" |
+  Tee-Object -FilePath docs\migration\inventory-mockbean.log
+Select-String -Path .\src\**\*.java -Pattern "org.springframework.cloud.(connector|CloudFactory)|Cloud\(\)" |
+  Tee-Object -FilePath docs\migration\inventory-cloud-connectors.log
+
+# Versiones del entorno
+.\gradlew --version
+```
+
+Esos cinco archivos en `docs/migration/` son el insumo real del `plan`.
+
+---
+
+## Los prompts
+
+Chat nuevo por paso. Estos asumen **Boot 4 sobre Java 17**, que es mi recomendación. Si el equipo decide meter Java 21 también, al final te digo qué cambiar.
+
+### specify
+
+```
+/speckit-specify Migrar ca-baas-credit de Spring Boot 3.5.14 a Spring Boot 4.
+
+Leé primero docs/migration/target-matrix.md. Ese documento tiene las versiones
+destino y los ítems de migración, con marcas de evidencia: [VERIFICADO] ya corre
+en producción en la organización, [OFICIAL] está en la guía de migración de Spring,
+[POR CONFIRMAR] hay que verificarlo contra este proyecto. Respetá esas marcas:
+no conviertas un POR CONFIRMAR en un hecho sin verificarlo.
+
+ALCANCE:
+- Spring Boot 3.5.14 → 4.1.0, con Spring Framework 7, Spring Security 7 y
+  Spring WS 5 según la matriz.
+- Java se mantiene en 17. La migración a Java 21 es un cambio independiente
+  y posterior, FUERA de alcance.
+- Migración a Jackson 3, que es el default de Boot 4.
+- Reemplazo de Spring Cloud Connectors por java-cfenv.
+- Actualización del framework de pruebas y de las anotaciones removidas.
+- No se modifica comportamiento de negocio.
+
+CONTEXTO: microservicio bancario de operaciones de tarjeta de crédito, con
+integraciones hacia TSYS vía DHI. Arquitectura por capas
+Controller → Delegate → Operation → Gateway. Stack SOAP y cliente Redis.
+
+CRITERIOS DE SATISFACCIÓN:
+1. ./gradlew clean build compila sin errores.
+2. Todas las pruebas existentes pasan sin cambiar sus aserciones. Los cambios de
+   anotaciones (@MockBean → @MockitoBean) no cuentan como cambio de aserción.
+3. La suite de acceptanceTest no presenta regresiones respecto a
+   docs/migration/baseline-boot35-acceptance.log.
+4. SonarQube no introduce issues nuevos.
+5. CRÍTICO: los payloads serializados hacia TSYS/DHI y los de cada endpoint
+   expuesto son equivalentes antes y después de la migración a Jackson 3. Esta
+   equivalencia se verifica con comparación explícita de payloads, no asumiendo
+   que las pruebas unitarias la cubren.
+6. Queda documentado qué issues del reporte Snyk cierra este cambio y cuáles no.
+
+RIESGO PRINCIPAL: Jackson 3 está en el camino de serialización de operaciones
+con efecto financiero. Un cambio de mapeo no lo detecta el compilador y puede no
+aparecer en pruebas con mocks.
+```
+
+### clarify
+
+```
+/speckit-clarify
+```
+
+### plan
+
+```
+/speckit-plan Usá como insumo verificado estos archivos de docs/migration/:
+baseline-boot35-build.log, baseline-boot35-acceptance.log,
+baseline-deprecations.log, inventory-mockbean.log,
+inventory-cloud-connectors.log.
+
+Resolvé contra el código y el build reales:
+
+1. JACKSON 3 — identificá cada punto de serialización/deserialización del
+   proyecto: DTOs de los contratos hacia TSYS/DHI, modelos generados por
+   OpenAPI Generator, configuraciones de ObjectMapper, anotaciones de Jackson,
+   serializadores y deserializadores propios. Para cada uno, determiná si el
+   cambio de group ID y de paquetes lo afecta.
+   Evaluá si conviene usar el módulo intermedio spring-boot-jackson2 para
+   desacoplar esta parte, y decí en qué caso sí y en qué caso no.
+
+2. STARTERS — listá cada starter declarado y su equivalente en Boot 4
+   (spring-boot-starter-web pasa a spring-boot-starter-webmvc; verificá el resto).
+
+3. DEPRECADOS — a partir de baseline-deprecations.log, listá qué APIs usadas
+   fueron eliminadas en Boot 4 y cuál es su reemplazo.
+
+4. SPRING CLOUD CONNECTORS — a partir de inventory-cloud-connectors.log,
+   determiná qué clases hay que cambiar y cómo queda cada una con java-cfenv.
+
+5. PRUEBAS — a partir de inventory-mockbean.log, cuantificá el reemplazo de
+   anotaciones. Determiná si el salto de JUnit requiere más que cambiar versiones.
+
+6. SOAP — determiná si el stack SOAP necesita saaj-impl y metro-saaj explícitos
+   bajo el Tomcat de Jakarta EE 11, según lo indicado en la matriz.
+
+7. OVERRIDES — definí los bloques constraints y resolutionStrategy finales,
+   siguiendo el patrón de la matriz. NO introduzcas el BOM de Spring Boot:
+   la decisión es mantener el patrón de pines explícitos de la organización.
+
+8. PLUGINS INTERNOS — confirmá qué versión de caBaasBaseLibrary se usa y si
+   todas las librerías ca-baas-util-* del proyecto tienen versión compatible.
+
+Marcá cada decisión como HECHO (verificado en código, build o documentación
+oficial citada) o SUPUESTO.
+
+NO ejecutes ./gradlew build en este paso. La verificación va en tasks.md.
+```
+
+### tasks
+
+```
+/speckit-tasks Ordená las tareas en tandas por riesgo creciente:
+
+Tanda 1 — Build: versiones de plugins y de ext, starters renombrados, bloques
+          constraints y resolutionStrategy. Objetivo: que compile.
+Tanda 2 — Deprecados y APIs removidas. Objetivo: que compile sin advertencias.
+Tanda 3 — Pruebas: anotaciones y framework. Objetivo: que la suite corra.
+Tanda 4 — Spring Cloud Connectors → java-cfenv.
+Tanda 5 — Jackson 3 y verificación de equivalencia de payloads.
+
+Cada tanda termina con build y pruebas.
+
+La Tanda 5 debe incluir una tarea explícita de comparación de payloads
+serializados contra el baseline, por cada contrato hacia TSYS/DHI y por cada
+endpoint expuesto. No la des por cubierta con las pruebas unitarias.
+
+Agregá una tarea final que escriba docs/migration/boot4-result.md con qué issues
+del reporte Snyk quedaron cerrados y cuáles siguen abiertos.
+```
+
+### implement
+
+```
+/speckit-implement Aplicá solo la Tanda 1. Al terminar, pará y reportá qué
+cambió antes de seguir.
+```
+
+Una tanda por chat.
+
+---
+
+## Modelos
+
+Igual que en Fase 1, pero con una diferencia: acá el `implement` también merece modelo fuerte en las tandas 4 y 5, porque son cambios de código y no de configuración.
+
+| Paso | Modelo | Esfuerzo |
+|---|---|---|
+| specify, clarify, tasks | Sonnet 5 | Medium |
+| **plan** | **Opus 5** | **High** |
+| implement tandas 1-3 | Sonnet 5 | Medium |
+| **implement tandas 4-5** | **Opus 5** | **High** |
+
+---
+
+## Si deciden meter Java 21 también
+
+Cambiá en el `specify`:
+
+```
+- Java 17 → 21: sourceCompatibility, targetCompatibility y options.release = 21.
+```
+
+y quitá la línea que lo pone fuera de alcance. Agregá una Tanda 0 en el `tasks` con el cambio de toolchain y las librerías de instrumentación (JaCoCo, Lombok, ByteBuddy), antes de tocar Spring. Así, si truena ahí, sabés que fue el JDK.
