@@ -1039,3 +1039,44 @@ Al terminar, corré .\gradlew.bat test --no-configuration-cache y reportá
 el conteo: cuántos pasan, cuántos fallan, y confirmá que los 20 fallos
 bajaron a 18 y que todos los restantes son de las clases afectadas por
 el bloqueador SOAP.
+
+Las tres: sí, sí y sí.
+
+## 1. Sí, solo IT
+
+El reporte lo dice: 181/201 pasan, los 20 fallos son todos de clases IT. **Las unitarias están en verde sobre Boot 4.1.0.** Eso no es poco — significa que el salto de framework en sí funcionó, y lo que queda roto es infraestructura de pruebas de integración, no comportamiento de la aplicación.
+
+## 2. Sí, y debí decírtelo antes
+
+Es lo más barato que podés hacer ahora mismo y no cuesta un solo credit. El hermano corre Boot 4.1.0 con `ca-baas-util-test` en la misma línea. Hay tres posibilidades y las tres te sirven: declara XMLUnit 2.x explícitamente, excluye algo de la librería, o sencillamente no usa el matcher SOAP en sus tests.
+
+Primero averiguá qué estás usando vos:
+
+```powershell
+Get-ChildItem .\src\test -Recurse -Filter *.java |
+  Select-String -Pattern 'ca\.baas\.util\.test' |
+  Group-Object Filename | Sort-Object Count -Descending
+```
+
+Eso te da las clases exactas del matcher. Después, en el repo del hermano:
+
+```powershell
+Select-String -Path <ruta-hermano>\build.gradle -Pattern 'xmlunit|ca-baas-util-test|exclude'
+
+Get-ChildItem <ruta-hermano>\src\test -Recurse -Filter *.java |
+  Select-String -Pattern 'xmlunit|ca\.baas\.util\.test'
+```
+
+Si aparece una declaración explícita de XMLUnit en su `build.gradle`, ahí está tu respuesta y es una línea. Si no aparece nada, también aprendés algo: el hermano nunca ejercitó ese camino, su verde no te sirve de precedente, y el problema es tuyo de verdad.
+
+Esto es exactamente el uso de referencia que definiste. Mirarlo vos, no metérselo al agente.
+
+## 3. Sí, pero con una distinción importante entre las dos
+
+**Tanda 4 (Spring Cloud Connectors)** — adelante sin reservas. Es independiente del bloqueador y, por lo que vimos con los inventarios, puede ser casi trivial: si no hay imports de `org.springframework.cloud.` en `src/`, es borrar declaraciones muertas del `build.gradle`. Hacela ahora.
+
+**Tanda 5 (equivalencia de comportamiento de Jackson)** — acá sí frená un poco. Es donde vive el riesgo del formato de fechas, y es la tanda que **no podés dar por cerrada con 20 IT caídos**, porque los IT son justamente donde se verifica el comportamiento de serialización contra payloads reales. Podés avanzarla, pero su criterio de cierre queda condicionado a que la suite corra completa.
+
+No la marques verde hasta entonces. Si el bloqueador de SOAP termina siendo ticket aparte, la equivalencia de Jackson se va con él, porque comparten la misma evidencia.
+
+Pasame la imagen de los tasks de 4 y 5 y te digo qué se puede cerrar hoy y qué queda condicionado.
