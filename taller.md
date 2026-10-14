@@ -1080,3 +1080,31 @@ Esto es exactamente el uso de referencia que definiste. Mirarlo vos, no metérse
 No la marques verde hasta entonces. Si el bloqueador de SOAP termina siendo ticket aparte, la equivalencia de Jackson se va con él, porque comparten la misma evidencia.
 
 Pasame la imagen de los tasks de 4 y 5 y te digo qué se puede cerrar hoy y qué queda condicionado.
+
+
+Cierre tanda 3....
+
+
+El bloqueador de SOAP/XMLUnit quedó resuelto. No modifiques código: ya está
+aplicado y verificado. Solo actualizá la documentación.
+
+Causa real: build.gradle declaraba `testRuntimeOnly 'xmlunit:xmlunit:1.6'`,
+la librería original de la línea 1.x. CabaasDiff (ca-baas-util-test:10.4.3)
+extiende org.custommonkey.xmlunit.Diff, y esa clase la provee también
+`org.xmlunit:xmlunit-legacy`, el módulo de compatibilidad de XMLUnit 2.
+Además el scope testRuntimeOnly dejaba la dependencia fuera del classpath
+de compilación, que es donde javac la necesitaba para resolver la superclase.
+
+Solución aplicada: reemplazar esa línea por
+`testImplementation 'org.xmlunit:xmlunit-legacy:2.12.0'`.
+Resultado: clean test pasa.
+
+Actualizá:
+1. tasks.md — marcá T042/T043/T044 según corresponda.
+2. plan.md y research.md — corregí la conclusión de que el bloqueador no era
+   arreglable desde este repo y que requería bump de librería externa. Era
+   una declaración propia del build, no una limitación de la librería.
+3. Registrá que quitar xmlunit:xmlunit:1.6 además cierra 1 hallazgo Medium
+   de Snyk.
+
+No ejecutes build ni tests. Solo documentación.
