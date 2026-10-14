@@ -1027,3 +1027,15 @@ NO arregles los 2 fallos menores todavía. Sin la suite compilando no se
 pueden verificar.
 
 Si el bloqueador persiste, no intentes nada más: pará y dejá el reporte.
+
+Sigue aca...
+
+Arreglá únicamente los 2 fallos menores (el fixture de categoría con
+HttpStatus.toString() y la expectativa 500→400 de CashAdvanceIT).
+
+No toques nada relacionado con el matcher SOAP ni con XMLUnit.
+
+Al terminar, corré .\gradlew.bat test --no-configuration-cache y reportá
+el conteo: cuántos pasan, cuántos fallan, y confirmá que los 20 fallos
+bajaron a 18 y que todos los restantes son de las clases afectadas por
+el bloqueador SOAP.
