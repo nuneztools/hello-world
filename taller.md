@@ -1002,3 +1002,28 @@ else { "Sin coincidencias de @MockBean/@SpyBean en src/ al $(Get-Date -Format 'y
 ```
 
 Veo en el log de arriba que ya tenés dos señales reales de migración que sí van a dar trabajo: `setHttpClient(HttpClient)` en `HttpComponentsMessageSender` (`TimeOutUtils.java:24`) y `setObjectMapper(ObjectMapper)` en `Jackson2JsonRedisSerializer` (`CachingConfig.java:48`), ambas marcadas *for removal*. Esa segunda es la que te va a cruzar con Jackson 3 en Fase 2 — el serializador de Redis cambia de paquete y de firma a la vez. Vale la pena que `baseline-deprecations.log` quede completo antes de tocar nada.
+
+Hipotesis
+
+Antes de decidir alcance, probá una hipótesis acotada.
+
+Agregá estas dos líneas al bloque dependencies de build.gradle:
+
+    implementation 'com.sun.xml.messaging.saaj:saaj-impl:3.0.4'
+    implementation 'com.sun.xml.messaging.saaj:metro-saaj:3.0.4'
+
+Es la implementación SAAJ de la línea Jakarta. Hipótesis: el bloqueador
+viene de que el classpath resuelve una implementación SAAJ de la línea
+javax, incompatible con el stack Jakarta de Boot 4.
+
+Luego ejecutá únicamente:
+
+    .\gradlew.bat compileTestJava --no-configuration-cache
+
+Reportá uno de tres resultados: el bloqueador desaparece, persiste igual,
+o cambia de síntoma. Pegá el error exacto si persiste o cambia.
+
+NO arregles los 2 fallos menores todavía. Sin la suite compilando no se
+pueden verificar.
+
+Si el bloqueador persiste, no intentes nada más: pará y dejá el reporte.
